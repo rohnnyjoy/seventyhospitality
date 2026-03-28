@@ -5,7 +5,7 @@
 
 /* Time ruler — spans the grid, same columns as slot rows */
 .rulerLabel {
-  /* empty cell above facility names */
+  padding-left: var(--gs-space-4);
 }
 
 .rulerHour {
@@ -25,6 +25,7 @@
   font-size: var(--gs-font-size-body);
   font-weight: var(--gs-font-weight-medium);
   color: var(--gs-text);
+  padding-left: var(--gs-space-4);
   padding-right: var(--gs-space-3);
   border-top: 1px solid var(--gs-border);
 }
