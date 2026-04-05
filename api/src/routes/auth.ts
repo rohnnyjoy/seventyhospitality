@@ -46,7 +46,12 @@ export async function authRoutes(app: FastifyInstance) {
     if (req.user) {
       await authService.logout(req.user.sessionId);
     }
-    reply.clearCookie(AUTH_CONSTANTS.SESSION_COOKIE_NAME, { path: '/' });
+    reply.clearCookie(AUTH_CONSTANTS.SESSION_COOKIE_NAME, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+    });
     return reply.send({ data: { loggedOut: true } });
   });
 

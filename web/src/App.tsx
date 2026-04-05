@@ -1,22 +1,24 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { MembersPage } from './pages/MembersPage';
-
 import { SignInPage } from './pages/SignInPage';
 import { BookingsPage } from './pages/BookingsPage';
 import { FacilitiesPage } from './pages/FacilitiesPage';
+import { AuthGuard } from './components/AuthGuard';
 
+function Protected({ children }: { children: React.ReactNode }) {
+  return <AuthGuard>{children}</AuthGuard>;
+}
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/members" replace />} />
+        <Route path="/" element={<Protected><Navigate to="/members" replace /></Protected>} />
         <Route path="/sign-in" element={<SignInPage />} />
-        <Route path="/members" element={<MembersPage />} />
-
-        <Route path="/bookings" element={<Navigate to="/bookings/courts" replace />} />
-        <Route path="/bookings/:tab" element={<BookingsPage />} />
-        <Route path="/facilities" element={<FacilitiesPage />} />
+        <Route path="/members" element={<Protected><MembersPage /></Protected>} />
+        <Route path="/bookings" element={<Protected><Navigate to="/bookings/courts" replace /></Protected>} />
+        <Route path="/bookings/:tab" element={<Protected><BookingsPage /></Protected>} />
+        <Route path="/facilities" element={<Protected><FacilitiesPage /></Protected>} />
       </Routes>
     </BrowserRouter>
   );

@@ -32,7 +32,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [dark, toggleDark] = useDarkMode();
 
   async function handleLogout() {
-    await api.logout();
+    try { await api.logout(); } catch { /* session may already be expired */ }
     navigate('/sign-in');
   }
 
