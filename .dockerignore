@@ -1,0 +1,12 @@
+**/node_modules
+api/dist
+web/dist
+**/.env
+**/*.log
+.git
+.claude
+infra
+deploy
+mobile
+scripts
+signature

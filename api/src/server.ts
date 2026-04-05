@@ -1,4 +1,7 @@
 import 'dotenv/config';
+import { existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
@@ -39,6 +42,26 @@ app.get('/api/plans', async (_req, reply) => {
 
 // Health check
 app.get('/api/health', async () => ({ status: 'ok' }));
+
+// Serve bundled web app in production
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const publicDir = join(__dirname, '..', 'public');
+
+if (existsSync(publicDir)) {
+  const fastifyStatic = await import('@fastify/static');
+  await app.register(fastifyStatic.default, {
+    root: publicDir,
+    wildcard: false,
+  });
+
+  // SPA fallback: serve index.html for non-API routes
+  app.setNotFoundHandler(async (req, reply) => {
+    if (req.url.startsWith('/api/')) {
+      return reply.status(404).send({ error: { code: 'NOT_FOUND', message: 'Route not found' } });
+    }
+    return reply.sendFile('index.html');
+  });
+}
 
 const port = Number(process.env.PORT ?? 3001);
 await app.listen({ port, host: '0.0.0.0' });
