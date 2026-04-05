@@ -24,6 +24,7 @@ export interface AuthenticatedUser {
   userId: string;
   sessionId: string;
   email: string;
+  role: string;
 }
 
 // ── Constants ──
@@ -91,5 +92,12 @@ export class SessionExpiredError extends AuthenticationError {
   constructor() {
     super('Session has expired');
     this.name = 'SessionExpiredError';
+  }
+}
+
+export class NotAuthorizedError extends AuthenticationError {
+  constructor() {
+    super('Not authorized');
+    this.name = 'NotAuthorizedError';
   }
 }

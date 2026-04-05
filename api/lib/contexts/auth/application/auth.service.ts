@@ -7,10 +7,12 @@ import {
   isMagicLinkUsed,
   InvalidTokenError,
   SessionExpiredError,
+  NotAuthorizedError,
   type AuthenticatedUser,
 } from '../domain';
 import type { SessionRepository } from '../infrastructure/session.repository';
 import type { MagicLinkRepository } from '../infrastructure/magic-link.repository';
+import type { AdminUserRepository } from '../infrastructure/admin-user.repository';
 import type { JwtService } from '../infrastructure/jwt.service';
 import type { NotificationService } from '@/lib/contexts/communications/application';
 
@@ -18,16 +20,20 @@ export class AuthService {
   constructor(
     private readonly sessionRepo: SessionRepository,
     private readonly magicLinkRepo: MagicLinkRepository,
+    private readonly adminUserRepo: AdminUserRepository,
     private readonly jwt: JwtService,
     private readonly notifications: NotificationService,
     private readonly appUrl: string,
   ) {}
 
   /**
-   * Send a magic link email. Creates a token and sends it.
-   * Does not reveal whether the email exists — always returns success.
+   * Send a magic link email. Only sends if the email belongs to an admin user.
+   * Does not reveal whether the email exists — always returns silently.
    */
   async sendMagicLink(email: string): Promise<void> {
+    const isAdmin = await this.adminUserRepo.exists(email);
+    if (!isAdmin) return; // Silent — don't reveal who is/isn't an admin
+
     const { token, hash } = generateToken();
     const expiresAt = new Date(
       Date.now() + AUTH_CONSTANTS.MAGIC_LINK_TTL_MINUTES * 60 * 1000,
@@ -62,6 +68,10 @@ export class AuthService {
     // Evict oldest sessions if over limit
     await this.sessionRepo.evictOldest(magicLink.email, AUTH_CONSTANTS.MAX_SESSIONS_PER_USER - 1);
 
+    // Verify admin status (defense in depth)
+    const adminUser = await this.adminUserRepo.findByEmail(magicLink.email);
+    if (!adminUser) throw new NotAuthorizedError();
+
     const session = await this.sessionRepo.create(magicLink.email, expiresAt);
 
     // Sign JWT
@@ -69,6 +79,7 @@ export class AuthService {
       sub: session.userId,
       sid: session.id,
       email: session.email,
+      role: adminUser.role,
     });
 
     return { jwt: jwtToken, expiresAt };
@@ -89,10 +100,15 @@ export class AuthService {
     // Update last active (fire-and-forget)
     this.sessionRepo.updateLastActive(session.id).catch(() => {});
 
+    // Re-verify admin status on each request (catches revoked access)
+    const adminUser = await this.adminUserRepo.findByEmail(session.email);
+    if (!adminUser) throw new NotAuthorizedError();
+
     return {
       userId: session.userId,
       sessionId: session.id,
       email: session.email,
+      role: adminUser.role,
     };
   }
 

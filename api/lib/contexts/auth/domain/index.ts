@@ -11,4 +11,5 @@ export {
   AuthenticationError,
   InvalidTokenError,
   SessionExpiredError,
+  NotAuthorizedError,
 } from './auth';

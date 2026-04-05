@@ -4,6 +4,7 @@ export interface SessionJwtPayload extends JWTPayload {
   sub: string;  // userId
   sid: string;  // sessionId
   email: string;
+  role: string;
 }
 
 export class JwtService {
@@ -15,7 +16,7 @@ export class JwtService {
     this.secret = new TextEncoder().encode(secretKey);
   }
 
-  async sign(payload: { sub: string; sid: string; email: string }): Promise<string> {
+  async sign(payload: { sub: string; sid: string; email: string; role: string }): Promise<string> {
     return new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
