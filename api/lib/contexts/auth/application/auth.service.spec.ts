@@ -70,6 +70,7 @@ function createService(overrides: {
     overrides.jwt ?? mockJwt(),
     overrides.notifications ?? mockNotifications(),
     'https://app.com',
+    'https://app.com',
   );
 }
 
