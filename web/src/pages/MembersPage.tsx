@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { SplitContainer, Panel, useSelection, usePanelLayout } from 'octahedron';
 import { api } from '../lib/api';
 import { AppShell } from '../components/AppShell';
@@ -11,7 +12,8 @@ export function MembersPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
 
-  const selection = useSelection({ urlParam: 'id' });
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selection = useSelection({ urlParam: 'id', searchParams, setSearchParams });
   const layout = usePanelLayout({
     panelId: 'inspector',
     isOpen: selection.selectedId != null,
