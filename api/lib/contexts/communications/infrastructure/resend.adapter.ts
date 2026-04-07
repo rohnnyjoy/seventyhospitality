@@ -67,15 +67,72 @@ export class ResendAdapter implements NotificationSender {
       subject,
       ...(templateId
         ? { template: { id: templateId, variables } }
-        : { html: plainTextFallback(notification.type, variables) }),
+        : { html: renderEmail(notification.type, variables) }),
     });
   }
 }
 
 /** Dev/fallback: minimal HTML until templates are set up in Resend dashboard. */
-function plainTextFallback(type: string, variables: Record<string, string>): string {
-  const vars = Object.entries(variables)
-    .map(([k, v]) => `<strong>${k}:</strong> ${v}`)
-    .join('<br>');
-  return `<p>[${type}]</p><p>${vars}</p>`;
+function renderEmail(type: Notification['type'], variables: Record<string, string>): string {
+  const wrapper = (content: string) => `
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:400px;background:#ffffff;border-radius:8px;padding:40px">
+${content}
+</table>
+<p style="margin-top:24px;font-size:12px;color:#9ca3af">Seventy Badminton Club</p>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+  switch (type) {
+    case 'magic-link':
+      return wrapper(`
+<tr><td style="text-align:center;padding-bottom:24px">
+  <span style="font-size:18px;font-weight:600;color:#111827">Sign in to Seventy</span>
+</td></tr>
+<tr><td style="text-align:center;padding-bottom:32px;font-size:14px;color:#6b7280;line-height:1.5">
+  Click the button below to sign in. This link expires in 15 minutes.
+</td></tr>
+<tr><td style="text-align:center;padding-bottom:32px">
+  <a href="${variables.verifyUrl}" style="display:inline-block;padding:10px 24px;background:#4a7c59;color:#ffffff;font-size:14px;font-weight:500;text-decoration:none;border-radius:6px">
+    Sign in
+  </a>
+</td></tr>
+<tr><td style="font-size:12px;color:#9ca3af;line-height:1.4">
+  If you didn't request this, you can ignore this email.
+</td></tr>`);
+
+    case 'welcome':
+      return wrapper(`
+<tr><td style="text-align:center;padding-bottom:24px">
+  <span style="font-size:18px;font-weight:600;color:#111827">Welcome to Seventy</span>
+</td></tr>
+<tr><td style="font-size:14px;color:#374151;line-height:1.5">
+  Hi ${variables.memberName}, welcome to Seventy Badminton Club! Your ${variables.planName} membership is now active.
+</td></tr>`);
+
+    case 'payment-failed':
+      return wrapper(`
+<tr><td style="text-align:center;padding-bottom:24px">
+  <span style="font-size:18px;font-weight:600;color:#111827">Payment Failed</span>
+</td></tr>
+<tr><td style="font-size:14px;color:#374151;line-height:1.5">
+  Hi ${variables.memberName}, we were unable to process your membership payment. Please update your payment method to avoid interruption.
+</td></tr>`);
+
+    case 'membership-canceled':
+      return wrapper(`
+<tr><td style="text-align:center;padding-bottom:24px">
+  <span style="font-size:18px;font-weight:600;color:#111827">Membership Canceled</span>
+</td></tr>
+<tr><td style="font-size:14px;color:#374151;line-height:1.5">
+  Hi ${variables.memberName}, your membership has been canceled. You'll have access until ${variables.endsAt}.
+</td></tr>`);
+  }
 }
