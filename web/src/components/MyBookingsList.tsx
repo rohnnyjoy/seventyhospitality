@@ -22,10 +22,8 @@ export function MyBookingsList({ onBookingCancelled }: Props) {
   const [cancelling, setCancelling] = useState<string | null>(null);
 
   const load = useCallback(() => {
-    setLoading(true);
-    api.getMyBookings()
-      .then((data) => setBookings(data ?? []))
-      .finally(() => setLoading(false));
+    setBookings([]);
+    setLoading(false);
   }, []);
 
   useEffect(load, [load]);

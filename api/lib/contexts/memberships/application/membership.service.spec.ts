@@ -57,9 +57,9 @@ describe('MembershipService', () => {
       (membershipRepo.getByMemberId as ReturnType<typeof vi.fn>).mockResolvedValue(null);
 
       const service = new MembershipService(membershipRepo, planRepo, stripe);
-      const url = await service.createCheckoutSession('mbr_1', 'plan_1', 'test@test.com', 'John Doe', 'cus_existing');
+      const result = await service.createCheckoutSession('mbr_1', 'plan_1', 'test@test.com', 'John Doe', 'cus_existing');
 
-      expect(url).toBe('https://checkout.stripe.com/session');
+      expect(result).toEqual({ url: 'https://checkout.stripe.com/session', newStripeCustomerId: null });
       expect(stripe.createCheckoutSession).toHaveBeenCalledWith('cus_existing', 'price_123', 'mbr_1', 'plan_1');
     });
 

@@ -152,6 +152,7 @@ model Court {
   active                      Boolean  @default(true)
   createdAt                   DateTime @default(now())
   updatedAt                   DateTime @updatedAt
+  eventClaims                 ClubEventCourt[]
 
   @@map("courts")
 }
@@ -189,4 +190,56 @@ model Booking {
   @@index([facilityType, facilityId, date, status])
   @@index([memberId, date])
   @@map("bookings")
+}
+
+model ClubEvent {
+  id        String   @id @default(cuid())
+  title     String
+  imageUrl  String?
+  details   String?
+  startsAt  DateTime
+  endsAt    DateTime
+  timezone  String   @default("America/New_York")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  courts    ClubEventCourt[]
+
+  @@index([active, startsAt])
+  @@index([startsAt])
+  @@map("club_events")
+}
+
+model ManagedMediaAsset {
+  id               String    @id @default(cuid())
+  publicPath       String    @unique
+  usage            String
+  status           String    @default("pending")
+  contentType      String
+  sizeBytes        Int
+  originalFilename String
+  ownerType        String?
+  ownerId          String?
+  attachedAt       DateTime?
+  discardedAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([usage, status, createdAt])
+  @@index([ownerType, ownerId])
+  @@map("managed_media_assets")
+}
+
+model ClubEventCourt {
+  id        String   @id @default(cuid())
+  eventId   String
+  courtId   String
+  createdAt DateTime @default(now())
+
+  event ClubEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  court Court     @relation(fields: [courtId], references: [id], onDelete: Restrict)
+
+  @@unique([eventId, courtId])
+  @@index([courtId])
+  @@map("club_event_courts")
 }

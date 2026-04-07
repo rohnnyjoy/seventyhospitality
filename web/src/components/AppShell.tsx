@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { href: '/members', label: 'Members' },
   { href: '/bookings', label: 'Bookings' },
   { href: '/facilities', label: 'Facilities' },
+  { href: '/events', label: 'Events' },
 ];
 
 function useDarkMode() {
@@ -63,9 +64,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             variant="ghost"
             onClick={toggleDark}
           />
-          <button className={styles.navItem} onClick={handleLogout}>
+          <Button variant="ghost" onClick={handleLogout}>
             Sign Out
-          </button>
+          </Button>
         </div>
       </header>
       <div className={styles.body}>{children}</div>

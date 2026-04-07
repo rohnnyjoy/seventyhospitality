@@ -3,6 +3,21 @@ import type { TransactionContext } from '@/lib/kernel/unit-of-work';
 import { asPrismaTx } from '@/lib/infrastructure/prisma-tx';
 import type { Booking, FacilityType, TimeSlot } from '../domain';
 
+export interface CourtBookingConflictRecord {
+  id: string;
+  facilityId: string;
+  memberId: string;
+  date: Date;
+  startTime: string;
+  endTime: string;
+  member: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
+}
+
 export class BookingRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
@@ -97,6 +112,14 @@ export class BookingRepository {
     });
   }
 
+  async cancelMany(ids: string[]): Promise<void> {
+    if (ids.length === 0) return;
+    await this.prisma.booking.updateMany({
+      where: { id: { in: ids } },
+      data: { status: 'cancelled' },
+    });
+  }
+
   /** Get a member's upcoming confirmed bookings */
   async getUpcomingForMember(memberId: string): Promise<Booking[]> {
     const today = new Date();
@@ -110,5 +133,29 @@ export class BookingRepository {
       },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
     }) as unknown as Booking[];
+  }
+
+  async listConfirmedCourtBookings(courtIds: string[], dates: Date[]): Promise<CourtBookingConflictRecord[]> {
+    if (courtIds.length === 0 || dates.length === 0) return [];
+
+    return this.prisma.booking.findMany({
+      where: {
+        facilityType: 'court',
+        facilityId: { in: courtIds },
+        date: { in: dates },
+        status: 'confirmed',
+      },
+      include: {
+        member: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
+    }) as unknown as CourtBookingConflictRecord[];
   }
 }

@@ -6,3 +6,14 @@ dist-ssr
 .DS_Store
 .env
 signature/
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+.claude/worktrees/
+web/octahedron

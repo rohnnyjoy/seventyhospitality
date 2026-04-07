@@ -23,14 +23,20 @@ export class AuthService {
     private readonly adminUserRepo: AdminUserRepository,
     private readonly jwt: JwtService,
     private readonly notifications: NotificationService,
-    private readonly appUrl: string,
+    private readonly verifyBaseUrl: string,
+    private readonly webUrl: string,
   ) {}
 
   /**
    * Send a magic link email. Only sends if the email belongs to an admin user.
    * Does not reveal whether the email exists — always returns silently.
    */
-  async sendMagicLink(email: string): Promise<void> {
+  async sendMagicLink(
+    email: string,
+    options?: {
+      redirectTo?: string | null;
+    },
+  ): Promise<void> {
     const isAdmin = await this.adminUserRepo.exists(email);
     if (!isAdmin) return; // Silent — don't reveal who is/isn't an admin
 
@@ -41,8 +47,13 @@ export class AuthService {
 
     await this.magicLinkRepo.create(email, hash, expiresAt);
 
-    const verifyUrl = `${this.appUrl}/api/auth/verify?token=${token}`;
-    await this.notifications.sendMagicLink(email, verifyUrl);
+    const verifyUrl = new URL('/api/auth/verify', this.verifyBaseUrl);
+    verifyUrl.searchParams.set('token', token);
+    if (options?.redirectTo) {
+      verifyUrl.searchParams.set('redirectTo', options.redirectTo);
+    }
+
+    await this.notifications.sendMagicLink(email, verifyUrl.toString());
   }
 
   /**
@@ -117,5 +128,9 @@ export class AuthService {
    */
   async logout(sessionId: string): Promise<void> {
     await this.sessionRepo.delete(sessionId);
+  }
+
+  getWebUrl(): string {
+    return this.webUrl;
   }
 }

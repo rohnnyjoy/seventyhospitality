@@ -1,4 +1,4 @@
-import { BookingService } from './booking.service';
+import { BookingService, type CourtBlockSource } from './booking.service';
 import {
   FacilityNotFoundError,
   BookingNotFoundError,
@@ -56,6 +56,12 @@ function mockBookingRepo(): BookingRepository {
 function mockMembershipChecker(): MembershipChecker {
   return {
     hasActiveMembership: vi.fn().mockResolvedValue(true),
+  };
+}
+
+function mockCourtBlockSource(): CourtBlockSource {
+  return {
+    listCourtBlockingSlots: vi.fn().mockResolvedValue([]),
   };
 }
 
@@ -126,14 +132,24 @@ function buildService(overrides: {
   showerRepo?: ShowerRepository;
   bookingRepo?: BookingRepository;
   membershipChecker?: MembershipChecker;
+  courtBlockSource?: CourtBlockSource;
   uow?: UnitOfWork;
 } = {}) {
   const courtRepo = overrides.courtRepo ?? mockCourtRepo();
   const showerRepo = overrides.showerRepo ?? mockShowerRepo();
   const bookingRepo = overrides.bookingRepo ?? mockBookingRepo();
   const membershipChecker = overrides.membershipChecker ?? mockMembershipChecker();
+  const courtBlockSource = overrides.courtBlockSource ?? mockCourtBlockSource();
   const uow = overrides.uow ?? mockUow();
-  return { service: new BookingService(courtRepo, showerRepo, bookingRepo, membershipChecker, uow), courtRepo, showerRepo, bookingRepo, membershipChecker, uow };
+  return {
+    service: new BookingService(courtRepo, showerRepo, bookingRepo, membershipChecker, courtBlockSource, uow),
+    courtRepo,
+    showerRepo,
+    bookingRepo,
+    membershipChecker,
+    courtBlockSource,
+    uow,
+  };
 }
 
 // ── Tests ──

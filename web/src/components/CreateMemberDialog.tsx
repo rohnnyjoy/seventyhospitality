@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Modal, ModalActions, Button, Input } from 'octahedron';
 import { api, ApiError } from '../lib/api';
 import { FormField } from './FormField';
+import styles from './CreateMemberDialog.module.css';
 
 interface Props {
   onCreated: (memberId: string) => void;
@@ -60,8 +61,8 @@ export function CreateMemberDialog({ onCreated, onClose }: Props) {
         </ModalActions>
       }
     >
-      <div style={{ padding: 'var(--octa-space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--octa-space-3)' }}>
-        <div style={{ display: 'flex', gap: 'var(--octa-space-3)' }}>
+      <div className={styles.body}>
+        <div className={styles.nameRow}>
           <FormField label="First Name">
             {(id) => <Input id={id} value={form.firstName} onValueChange={(v) => update('firstName', v)} />}
           </FormField>

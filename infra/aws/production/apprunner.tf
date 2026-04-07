@@ -27,7 +27,7 @@ resource "aws_iam_role_policy_attachment" "apprunner_ecr" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSAppRunnerServicePolicyForECRAccess"
 }
 
-# IAM role for App Runner instance (S3 media access)
+# IAM role for App Runner instance (S3 media + SSM access)
 resource "aws_iam_role" "apprunner_instance" {
   name = "${local.prefix}-apprunner-instance"
 
@@ -58,11 +58,18 @@ resource "aws_iam_role_policy" "apprunner_s3" {
   })
 }
 
-# VPC Connector for RDS access
-resource "aws_apprunner_vpc_connector" "main" {
-  vpc_connector_name = "${local.prefix}-vpc"
-  subnets            = aws_subnet.private[*].id
-  security_groups    = [aws_security_group.apprunner.id]
+resource "aws_iam_role_policy" "apprunner_ssm" {
+  name = "${local.prefix}-ssm-read"
+  role = aws_iam_role.apprunner_instance.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect   = "Allow"
+      Action   = ["ssm:GetParameters", "ssm:GetParameter"]
+      Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/${local.prefix}/*"
+    }]
+  })
 }
 
 resource "aws_apprunner_service" "api" {
@@ -81,15 +88,15 @@ resource "aws_apprunner_service" "api" {
         port = "3001"
 
         runtime_environment_variables = {
-          NODE_ENV                       = "production"
-          PORT                           = "3001"
-          WEB_URL                        = "https://${var.admin_domain}"
-          API_URL                        = "https://${var.admin_domain}"
-          PUBLIC_BASE_URL                = "https://${var.admin_domain}"
-          AUTH_DISABLED                  = "false"
-          MEDIA_BACKEND                  = "s3"
-          MEDIA_S3_BUCKET                = "seventy-media-983814062972-us-east-1"
-          MEDIA_S3_REGION                = var.aws_region
+          NODE_ENV                         = "production"
+          PORT                             = "3001"
+          WEB_URL                          = "https://${var.admin_domain}"
+          API_URL                          = "https://${var.admin_domain}"
+          PUBLIC_BASE_URL                  = "https://${var.admin_domain}"
+          AUTH_DISABLED                    = "false"
+          MEDIA_BACKEND                    = "s3"
+          MEDIA_S3_BUCKET                  = "seventy-media-983814062972-us-east-1"
+          MEDIA_S3_REGION                  = var.aws_region
           MEDIA_STALE_UPLOAD_MAX_AGE_HOURS = "24"
           MEDIA_STALE_UPLOAD_CLEANUP_LIMIT = "100"
         }
@@ -114,13 +121,6 @@ resource "aws_apprunner_service" "api" {
     instance_role_arn = aws_iam_role.apprunner_instance.arn
   }
 
-  network_configuration {
-    egress_configuration {
-      egress_type       = "DEFAULT"
-      vpc_connector_arn = aws_apprunner_vpc_connector.main.arn
-    }
-  }
-
   health_check_configuration {
     protocol            = "HTTP"
     path                = "/api/health"
@@ -137,7 +137,7 @@ resource "aws_apprunner_service" "api" {
 resource "aws_ssm_parameter" "database_url" {
   name  = "/${local.prefix}/database-url"
   type  = "SecureString"
-  value = local.database_url
+  value = var.database_url
 }
 
 resource "aws_ssm_parameter" "jwt_secret" {
@@ -168,19 +168,4 @@ resource "aws_ssm_parameter" "resend_api_key" {
   name  = "/${local.prefix}/resend-api-key"
   type  = "SecureString"
   value = var.resend_api_key
-}
-
-# IAM policy for App Runner to read SSM parameters
-resource "aws_iam_role_policy" "apprunner_ssm" {
-  name = "${local.prefix}-ssm-read"
-  role = aws_iam_role.apprunner_instance.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect   = "Allow"
-      Action   = ["ssm:GetParameters", "ssm:GetParameter"]
-      Resource = "arn:aws:ssm:${var.aws_region}:*:parameter/${local.prefix}/*"
-    }]
-  })
 }

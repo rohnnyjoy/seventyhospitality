@@ -1,0 +1,65 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.tableArea {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.modalBody {
+  display: grid;
+  gap: var(--octa-space-3);
+  padding: var(--octa-space-4);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-1);
+}
+
+.previewImage {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: var(--octa-control-radius);
+  border: 1px solid var(--octa-border);
+  margin-bottom: var(--octa-space-2);
+}
+
+.statusCell {
+  display: flex;
+  align-items: center;
+  gap: var(--octa-space-1);
+  flex-wrap: wrap;
+}
+
+.checkboxList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-2);
+}
+
+.imageField {
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-2);
+}
+
+.imageActions {
+  display: flex;
+  align-items: center;
+  gap: var(--octa-space-2);
+  flex-wrap: wrap;
+}
+
+.conflictList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-2);
+}

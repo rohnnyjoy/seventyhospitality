@@ -15,6 +15,22 @@ const stripe = useStripe ? new Stripe(stripeKey) : null;
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
+const DEFAULT_EVENT_TIMEZONE = 'America/New_York';
+
+function daysFromNowAt(daysFromNow: number, hours: number, minutes = 0) {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
+
+function nextWeekdayAt(weekday: number, hours: number, minutes = 0) {
+  const date = new Date();
+  const delta = (weekday - date.getDay() + 7) % 7 || 7;
+  date.setDate(date.getDate() + delta);
+  date.setHours(hours, minutes, 0, 0);
+  return date;
+}
 
 async function main() {
   console.log('Seeding Seventy database...\n');
@@ -155,6 +171,10 @@ async function main() {
     { member: created[6], content: 'May return next season.' },
   ];
 
+  await prisma.adminNote.deleteMany({
+    where: { authorId: 'seed_admin' },
+  });
+
   for (const n of notes) {
     await prisma.adminNote.create({
       data: { memberId: n.member.id, authorId: 'seed_admin', content: n.content },
@@ -195,6 +215,79 @@ async function main() {
   }
 
   console.log(`  Showers: ${showers.length}`);
+
+  // ── Club Events ──
+  const clubEvents = [
+    {
+      id: 'seed-sunday-open-play',
+      title: 'Sunday Open Play',
+      imageUrl: null,
+      details: 'All-level social play. Courts 1 and 2 are reserved for drop-in ladders, doubles rotations, and member guests.',
+      startsAt: nextWeekdayAt(0, 10),
+      endsAt: nextWeekdayAt(0, 20),
+      timezone: DEFAULT_EVENT_TIMEZONE,
+      active: true,
+      courtIds: ['court-1', 'court-2'],
+    },
+    {
+      id: 'seed-skills-clinic',
+      title: 'Serve + Return Clinic',
+      imageUrl: null,
+      details: 'Small-group coaching focused on first-ball patterns. Court 3 is blocked for instruction and feed drills.',
+      startsAt: nextWeekdayAt(3, 18),
+      endsAt: nextWeekdayAt(3, 20),
+      timezone: DEFAULT_EVENT_TIMEZONE,
+      active: true,
+      courtIds: ['court-3'],
+    },
+    {
+      id: 'seed-member-social',
+      title: 'Member Social Hour',
+      imageUrl: null,
+      details: 'Low-key social in the lounge with no court claim, useful for testing events that should not affect bookings.',
+      startsAt: nextWeekdayAt(5, 19),
+      endsAt: nextWeekdayAt(5, 22),
+      timezone: DEFAULT_EVENT_TIMEZONE,
+      active: true,
+      courtIds: [],
+    },
+    {
+      id: 'seed-ladder-finals',
+      title: 'Winter Ladder Finals',
+      imageUrl: null,
+      details: 'Completed event left in the system so the admin UI can exercise past-event states and editing.',
+      startsAt: daysFromNowAt(-7, 17),
+      endsAt: daysFromNowAt(-7, 21),
+      timezone: DEFAULT_EVENT_TIMEZONE,
+      active: false,
+      courtIds: ['court-1'],
+    },
+  ];
+
+  for (const event of clubEvents) {
+    const { id, courtIds, ...eventData } = event;
+    await prisma.clubEvent.upsert({
+      where: { id },
+      update: {
+        ...eventData,
+        courts: {
+          deleteMany: {},
+          ...(courtIds.length > 0
+            ? { create: courtIds.map((courtId) => ({ courtId })) }
+            : {}),
+        },
+      },
+      create: {
+        id,
+        ...eventData,
+        courts: courtIds.length > 0
+          ? { create: courtIds.map((courtId) => ({ courtId })) }
+          : undefined,
+      },
+    });
+  }
+
+  console.log(`  Events: ${clubEvents.length}`);
 
   console.log('\nDone.');
 }

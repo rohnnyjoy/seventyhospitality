@@ -61,22 +61,6 @@
   gap: var(--octa-space-1);
 }
 
-.navItem {
-  font-size: var(--octa-font-size-body);
-  color: var(--octa-muted);
-  text-decoration: none;
-  padding: var(--octa-space-1) var(--octa-space-2);
-  border-radius: var(--octa-control-radius);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
-
-.navItem:hover {
-  color: var(--octa-text);
-  background: var(--octa-hover-bg);
-}
-
 .body {
   flex: 1;
   min-height: 0;

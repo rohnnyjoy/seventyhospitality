@@ -3,8 +3,8 @@ import { Tag, type TagVariant } from 'octahedron';
 const STATUS_CONFIG: Record<string, { variant: TagVariant; label: string }> = {
   active: { variant: 'success', label: 'Active' },
   past_due: { variant: 'warning', label: 'Past Due' },
-  canceled: { variant: 'error', label: 'Canceled' },
-  unpaid: { variant: 'error', label: 'Unpaid' },
+  canceled: { variant: 'danger', label: 'Canceled' },
+  unpaid: { variant: 'danger', label: 'Unpaid' },
   incomplete: { variant: 'neutral', label: 'Incomplete' },
 };
 

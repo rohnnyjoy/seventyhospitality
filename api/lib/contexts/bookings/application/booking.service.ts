@@ -1,6 +1,9 @@
 import {
   type FacilityType,
   type MembershipChecker,
+  type Court,
+  type Shower,
+  type TimeSlot,
   createTimeSlot,
   generateAvailableSlots,
   bookingRules,
@@ -16,27 +19,32 @@ import type { ShowerRepository, CreateShowerInput, UpdateShowerInput } from '../
 import type { BookingRepository } from '../infrastructure/booking.repository';
 import type { UnitOfWork } from '@/lib/kernel/unit-of-work';
 
+export interface CourtBlockSource {
+  listCourtBlockingSlots(courtId: string, date: Date): Promise<TimeSlot[]>;
+}
+
 export class BookingService {
   constructor(
     private readonly courtRepo: CourtRepository,
     private readonly showerRepo: ShowerRepository,
     private readonly bookingRepo: BookingRepository,
     private readonly membershipChecker: MembershipChecker,
+    private readonly courtBlockSource: CourtBlockSource,
     private readonly uow: UnitOfWork,
   ) {}
 
   async bookCourt(courtId: string, date: string, startTime: string, memberId: string) {
-    const court = await this.courtRepo.getById(courtId);
-    if (!court || !court.active) throw new FacilityNotFoundError('Court', courtId);
+    const court = await this.getActiveCourt(courtId);
 
     const slot = createTimeSlot(startTime, court.slotDurationMinutes);
     const bookingDate = new Date(date);
 
     await this.validatePreconditions(bookingDate, court.maxAdvanceDays, memberId);
+    const blockedSlots = await this.courtBlockSource.listCourtBlockingSlots(courtId, bookingDate);
 
     return this.uow.execute(async (tx) => {
       const existing = await this.bookingRepo.getConfirmedForFacility(tx, 'court', courtId, bookingDate);
-      bookingRules.checkNoOverlap(existing, slot);
+      bookingRules.checkNoOverlap([...existing, ...blockedSlots], slot);
       bookingRules.checkOperatingHours(slot, court.operatingHoursStart, court.operatingHoursEnd);
 
       const count = await this.bookingRepo.countMemberBookings(tx, memberId, bookingDate, 'court');
@@ -56,8 +64,7 @@ export class BookingService {
   }
 
   async bookShower(showerId: string, date: string, startTime: string, memberId: string) {
-    const shower = await this.showerRepo.getById(showerId);
-    if (!shower || !shower.active) throw new FacilityNotFoundError('Shower', showerId);
+    const shower = await this.getActiveShower(showerId);
 
     const slot = createTimeSlot(startTime, shower.slotDurationMinutes);
     const bookingDate = new Date(date);
@@ -98,22 +105,21 @@ export class BookingService {
   }
 
   async getCourtAvailability(courtId: string, date: string) {
-    const court = await this.courtRepo.getById(courtId);
-    if (!court || !court.active) throw new FacilityNotFoundError('Court', courtId);
+    const court = await this.getActiveCourt(courtId);
 
     const bookingDate = new Date(date);
     const existing = await this.bookingRepo.getUpcomingForFacility('court', courtId, bookingDate);
+    const blockedSlots = await this.courtBlockSource.listCourtBlockingSlots(courtId, bookingDate);
     return generateAvailableSlots(
       court.operatingHoursStart,
       court.operatingHoursEnd,
       court.slotDurationMinutes,
-      existing,
+      [...existing, ...blockedSlots],
     );
   }
 
   async getShowerAvailability(showerId: string, date: string) {
-    const shower = await this.showerRepo.getById(showerId);
-    if (!shower || !shower.active) throw new FacilityNotFoundError('Shower', showerId);
+    const shower = await this.getActiveShower(showerId);
 
     const bookingDate = new Date(date);
     const existing = await this.bookingRepo.getUpcomingForFacility('shower', showerId, bookingDate);
@@ -192,6 +198,28 @@ export class BookingService {
 
     const hasActive = await this.membershipChecker.hasActiveMembership(memberId);
     if (!hasActive) throw new InactiveMembershipError();
+  }
+
+  private async getActiveCourt(courtId: string): Promise<Court> {
+    const court = await this.courtRepo.getById(courtId);
+    return this.requireActiveFacility('Court', courtId, court);
+  }
+
+  private async getActiveShower(showerId: string): Promise<Shower> {
+    const shower = await this.showerRepo.getById(showerId);
+    return this.requireActiveFacility('Shower', showerId, shower);
+  }
+
+  private requireActiveFacility<T extends { active: boolean }>(
+    facilityLabel: 'Court' | 'Shower',
+    facilityId: string,
+    facility: T | null,
+  ): T {
+    if (!facility || !facility.active) {
+      throw new FacilityNotFoundError(facilityLabel, facilityId);
+    }
+
+    return facility;
   }
 
   private async getCancellationDeadline(facilityType: FacilityType, facilityId: string): Promise<number> {

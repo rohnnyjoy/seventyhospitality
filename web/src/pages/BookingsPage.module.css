@@ -5,19 +5,15 @@
   min-height: 0;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--octa-space-3) var(--octa-space-4);
-  border-bottom: 1px solid var(--octa-border);
-  flex-shrink: 0;
+.dateTitle {
+  font-weight: var(--octa-font-weight-semibold);
 }
 
-.headerLeft {
+.tabGroup {
   display: flex;
-  align-items: center;
-  gap: var(--octa-space-3);
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .content {
@@ -26,10 +22,9 @@
   overflow: auto;
 }
 
-.gridArea {
+.tabContent {
+  min-height: 0;
 }
 
-.bookingsArea {
-  padding: var(--octa-space-4);
-  max-width: 640px;
+.gridArea {
 }

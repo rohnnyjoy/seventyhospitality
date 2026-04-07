@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { stripeGateway, membershipService } from '@/lib/container';
+import { stripeGateway, membershipService, memberRepo } from '@/lib/container';
 import type Stripe from 'stripe';
 
 export async function webhookRoutes(app: FastifyInstance) {
@@ -41,6 +41,15 @@ async function processEvent(event: Stripe.Event) {
       const session = event.data.object as Stripe.Checkout.Session;
       const subId = typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
       if (!subId || !session.metadata?.memberId) break;
+
+      // Persist stripeCustomerId as backstop (may already be set from checkout route)
+      const customerId = typeof session.customer === 'string' ? session.customer : session.customer?.id;
+      if (customerId && session.metadata.memberId) {
+        await memberRepo.setStripeCustomerId(session.metadata.memberId, customerId).catch(() => {
+          // Ignore if already set (unique constraint) — this is a backstop
+        });
+      }
+
       const subscription = await stripeGateway.retrieveSubscription(subId);
       await membershipService.handleCheckoutCompleted(stripeGateway.extractCheckoutData(session, subscription));
       break;

@@ -46,7 +46,7 @@ export class ResendAdapter implements NotificationSender {
   private readonly resend: Resend | null;
   private readonly fromAddress: string;
 
-  constructor(apiKey: string, fromAddress = 'Seventy <noreply@seventy.club>') {
+  constructor(apiKey: string, fromAddress = 'Seventy <noreply@seventyhospitality.com>') {
     this.resend = apiKey ? new Resend(apiKey) : null;
     this.fromAddress = fromAddress;
   }

@@ -1,5 +1,20 @@
 import { z } from 'zod';
 
+const nullableTrimmedString = (maxLength: number) =>
+  z.preprocess(
+    (value) => {
+      if (typeof value !== 'string') return value;
+      const trimmed = value.trim();
+      return trimmed === '' ? null : trimmed;
+    },
+    z.string().max(maxLength).nullable().optional(),
+  );
+
+const booleanQueryParam = z
+  .enum(['true', 'false'])
+  .optional()
+  .transform((value) => value === 'true');
+
 export const createMemberSchema = z.object({
   email: z.string().email(),
   firstName: z.string().min(1).max(100),
@@ -16,6 +31,11 @@ export const updateMemberSchema = z.object({
 
 export const createNoteSchema = z.object({
   content: z.string().min(1).max(5000),
+});
+
+export const sendMagicLinkSchema = z.object({
+  email: z.string().email(),
+  redirectTo: z.string().trim().min(1).max(2048).optional(),
 });
 
 export const createCheckoutSchema = z.object({
@@ -38,6 +58,13 @@ export const membersQuerySchema = z.object({
 
 export const createBookingSchema = z.object({
   memberId: z.string().min(1),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  startTime: z.string().regex(/^\d{2}:\d{2}$/),
+});
+
+export const createSelfBookingSchema = z.object({
+  facilityType: z.enum(['court', 'shower']),
+  facilityId: z.string().min(1),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startTime: z.string().regex(/^\d{2}:\d{2}$/),
 });
@@ -65,4 +92,44 @@ export const updateFacilitySchema = z.object({
   maxBookingsPerMemberPerDay: z.number().int().positive().optional(),
   cancellationDeadlineMinutes: z.number().int().min(0).optional(),
   active: z.boolean().optional(),
+});
+
+// ── Events ──
+
+export const eventsQuerySchema = z.object({
+  includeInactive: booleanQueryParam,
+  includePast: booleanQueryParam,
+});
+
+export const createEventSchema = z.object({
+  title: z.string().trim().min(1).max(200),
+  imageUrl: nullableTrimmedString(2000),
+  details: nullableTrimmedString(10000),
+  startsAt: z.coerce.date(),
+  endsAt: z.coerce.date(),
+  timezone: z.string().trim().min(1).max(100).default('America/New_York'),
+  active: z.boolean().optional(),
+  courtIds: z.array(z.string().min(1)).optional(),
+  cancelConflictingBookings: z.boolean().optional(),
+});
+
+export const updateEventSchema = z.object({
+  title: z.string().trim().min(1).max(200).optional(),
+  imageUrl: nullableTrimmedString(2000),
+  details: nullableTrimmedString(10000),
+  startsAt: z.coerce.date().optional(),
+  endsAt: z.coerce.date().optional(),
+  timezone: z.string().trim().min(1).max(100).optional(),
+  active: z.boolean().optional(),
+  courtIds: z.array(z.string().min(1)).optional(),
+  cancelConflictingBookings: z.boolean().optional(),
+});
+
+export const deleteManagedImageSchema = z.object({
+  imageUrl: z.string().trim().min(1).max(2000),
+});
+
+export const cleanupManagedImagesQuerySchema = z.object({
+  maxAgeHours: z.coerce.number().int().positive().max(24 * 365).default(24),
+  limit: z.coerce.number().int().positive().max(500).default(100),
 });

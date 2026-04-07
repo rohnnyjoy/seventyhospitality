@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Button,
   AppIcon,
@@ -11,23 +11,17 @@ import {
   Toggle,
   DataTable,
   type DataTableColumn,
-  TabButton,
+  EmptyState,
+  TabPanelContent,
+  TabPanelGroup,
+  TabPanelList,
+  TabPanelTab,
+  pageStyles,
 } from 'octahedron';
 import { api } from '../lib/api';
+import type { Facility } from '../lib/facilities';
 import { FormField } from './FormField';
 import styles from './FacilitySettings.module.css';
-
-interface Facility {
-  id: string;
-  name: string;
-  slotDurationMinutes: number;
-  operatingHoursStart: string;
-  operatingHoursEnd: string;
-  maxAdvanceDays: number;
-  maxBookingsPerMemberPerDay: number;
-  cancellationDeadlineMinutes: number;
-  active: boolean;
-}
 
 type FacilityTab = 'courts' | 'showers';
 
@@ -51,50 +45,107 @@ export function FacilitySettings() {
   const [showers, setShowers] = useState<Facility[]>([]);
   const [edit, setEdit] = useState<{ type: FacilityTab; facility: Facility | null } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const load = useCallback(() => {
     setLoading(true);
-    Promise.all([api.listAllCourts(), api.listAllShowers()]).then(([c, s]) => {
-      setCourts(c ?? []);
-      setShowers(s ?? []);
-      setLoading(false);
-    });
+    setLoadError(null);
+
+    Promise.all([api.listAllCourts(), api.listAllShowers()])
+      .then(([c, s]) => {
+        setCourts(c ?? []);
+        setShowers(s ?? []);
+      })
+      .catch((error: unknown) => {
+        setLoadError(error instanceof Error ? error.message : 'Failed to load facilities');
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   useEffect(load, [load]);
 
-  const facilities = tab === 'courts' ? courts : showers;
+  const label = tab === 'courts' ? 'Court' : 'Shower';
+
+  function renderFacilityTable(type: FacilityTab, rows: Facility[]) {
+    const typeLabel = type === 'courts' ? 'Court' : 'Shower';
+
+    return (
+      <DataTable
+        rows={rows}
+        columns={courtColumns}
+        rowKey={(r) => r.id}
+        onRowClick={(r) => setEdit({ type, facility: r })}
+        loading={loading}
+        emptyMessage={
+          <EmptyState
+            title={`No ${type} configured`}
+            description={`Add the first ${typeLabel.toLowerCase()} to start accepting bookings.`}
+            action={
+              <Button color="primary" onClick={() => setEdit({ type, facility: null })}>
+                Add {typeLabel}
+              </Button>
+            }
+          />
+        }
+      />
+    );
+  }
 
   return (
     <div className={styles.page}>
-      <div
-        style={{ display: 'flex', gap: 'var(--octa-space-1)' }}
-        role="tablist"
-        aria-label="Facility type"
-      >
-        <TabButton variant="pill" role="tab" aria-selected={tab === 'courts'} active={tab === 'courts'} onClick={() => setTab('courts')}>
-          Courts
-        </TabButton>
-        <TabButton variant="pill" role="tab" aria-selected={tab === 'showers'} active={tab === 'showers'} onClick={() => setTab('showers')}>
-          Showers
-        </TabButton>
+      <div className={pageStyles.headerRow}>
+        <div className={pageStyles.headerLeft}>
+          <div className={pageStyles.headerTitleStack}>
+            <Text variant="title" as="div" className={pageStyles.headerTitle}>
+              Facilities
+            </Text>
+            <Text variant="caption" intent="muted" truncate as="div">
+              Configure courts and showers used for member bookings.
+            </Text>
+          </div>
+        </div>
+        <div className={pageStyles.headerActions}>
+          <Button
+            color="primary"
+            icon={<AppIcon name="plus" />}
+            onClick={() => setEdit({ type: tab, facility: null })}
+          >
+            Add {label}
+          </Button>
+        </div>
       </div>
 
-      <div className={styles.tableArea}>
-        <DataTable
-          rows={facilities}
-          columns={courtColumns}
-          rowKey={(r) => r.id}
-          onRowClick={(r) => setEdit({ type: tab, facility: r })}
-          loading={loading}
-          emptyMessage={`No ${tab} configured`}
-        />
-      </div>
+        <TabPanelGroup
+          value={tab}
+          onValueChange={(value) => setTab(value as FacilityTab)}
+          className={styles.tabGroup}
+        >
+        <TabPanelList className={pageStyles.tabPanelListInset}>
+          <TabPanelTab value="courts">Courts</TabPanelTab>
+          <TabPanelTab value="showers">Showers</TabPanelTab>
+        </TabPanelList>
 
-      <button className={styles.addRow} onClick={() => setEdit({ type: tab, facility: null })}>
-        <AppIcon name="plus" />
-        Add {tab === 'courts' ? 'Court' : 'Shower'}
-      </button>
+        {loadError ? (
+          <div className={pageStyles.notice}>
+            <Callout
+              intent="danger"
+              title="Could not load facilities"
+              action={<Button onClick={load}>Retry</Button>}
+            >
+              {loadError}
+            </Callout>
+          </div>
+        ) : null}
+
+        <div className={styles.tableArea}>
+          <TabPanelContent value="courts" className={styles.tabContent}>
+            {renderFacilityTable('courts', courts)}
+          </TabPanelContent>
+          <TabPanelContent value="showers" className={styles.tabContent}>
+            {renderFacilityTable('showers', showers)}
+          </TabPanelContent>
+        </div>
+      </TabPanelGroup>
 
       {edit && (
         <FacilityEditModal
@@ -189,7 +240,7 @@ function FacilityEditModal({
         </ModalActions>
       }
     >
-      <div style={{ padding: 'var(--octa-space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--octa-space-3)' }}>
+      <div className={styles.modalBody}>
         <FormField label="Name">
           {(id) => <Input id={id} value={name} onValueChange={setName} />}
         </FormField>
@@ -198,10 +249,10 @@ function FacilityEditModal({
         </FormField>
         <FormField label="Operating hours">
           {() => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--octa-space-2)' }}>
-              <Input value={opStart} onValueChange={setOpStart} style={{ width: 80 }} />
+            <div className={styles.hoursRow}>
+              <Input className={styles.timeInput} value={opStart} onValueChange={setOpStart} />
               <Text intent="muted">to</Text>
-              <Input value={opEnd} onValueChange={setOpEnd} style={{ width: 80 }} />
+              <Input className={styles.timeInput} value={opEnd} onValueChange={setOpEnd} />
             </div>
           )}
         </FormField>

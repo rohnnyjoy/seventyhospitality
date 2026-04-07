@@ -28,16 +28,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
-        with:
-          repository: Octahedron-UI/octahedron
-          path: octahedron
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - run: npm ci
+      - run: npm ci --legacy-peer-deps
         working-directory: web
       - run: npx tsc -b
         working-directory: web

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import Fastify from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 import { authHook } from './middleware/auth';
 import { memberRoutes } from './routes/members';
 import { authRoutes } from './routes/auth';
@@ -12,16 +13,44 @@ import { stripeRoutes } from './routes/stripe';
 import { webhookRoutes } from './routes/webhooks';
 import { cronRoutes } from './routes/cron';
 import { bookingRoutes } from './routes/bookings';
+import { eventRoutes } from './routes/events';
+import { mediaRoutes } from './routes/media';
+import { uploadAssetRoutes } from './routes/uploads';
+import { meRoutes } from './routes/me';
 
 const app = Fastify({ logger: true });
 
+function getAllowedWebOrigins(configuredWebUrl: string): string[] {
+  const origins = new Set<string>([configuredWebUrl]);
+
+  try {
+    const url = new URL(configuredWebUrl);
+    if (url.hostname === 'localhost') {
+      url.hostname = '127.0.0.1';
+      origins.add(url.toString().replace(/\/$/, ''));
+    } else if (url.hostname === '127.0.0.1') {
+      url.hostname = 'localhost';
+      origins.add(url.toString().replace(/\/$/, ''));
+    }
+  } catch {
+    // Fall back to the configured origin only when WEB_URL is not a valid URL.
+  }
+
+  return [...origins];
+}
+
+const webOrigins = getAllowedWebOrigins(process.env.WEB_URL ?? 'http://localhost:5173');
+
 await app.register(cors, {
-  origin: process.env.WEB_URL ?? 'http://localhost:5173',
+  origin: webOrigins,
   credentials: true,
   methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE'],
 });
 
 await app.register(cookie);
+
+await app.register(multipart);
+await app.register(uploadAssetRoutes, { prefix: '/uploads' });
 
 app.addHook('preHandler', authHook);
 
@@ -32,6 +61,9 @@ await app.register(stripeRoutes, { prefix: '/api/stripe' });
 await app.register(webhookRoutes, { prefix: '/api/webhooks' });
 await app.register(cronRoutes, { prefix: '/api/cron' });
 await app.register(bookingRoutes, { prefix: '/api' });
+await app.register(eventRoutes, { prefix: '/api/events' });
+await app.register(mediaRoutes, { prefix: '/api/media' });
+await app.register(meRoutes, { prefix: '/api/me' });
 
 // Plans
 import { planRepo } from '@/lib/container';
@@ -45,7 +77,7 @@ app.get('/api/health', async () => ({ status: 'ok' }));
 
 // Serve bundled web app in production
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const publicDir = join(__dirname, '..', 'public');
+const publicDir = join(__dirname, '..', '..', 'public');
 
 if (existsSync(publicDir)) {
   const fastifyStatic = await import('@fastify/static');

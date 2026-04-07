@@ -9,12 +9,3 @@ output "apprunner_url" {
 output "apprunner_arn" {
   value = aws_apprunner_service.api.arn
 }
-
-output "rds_endpoint" {
-  value = aws_rds_instance.main.endpoint
-}
-
-output "database_url" {
-  value     = local.database_url
-  sensitive = true
-}

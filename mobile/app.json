@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Seventy",
+    "slug": "seventy-mobile",
+    "scheme": "seventy",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-font"
+    ],
+    "web": {
+      "bundler": "metro"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "club.seventy.mobile"
+    },
+    "android": {
+      "package": "club.seventy.mobile"
+    }
+  }
+}

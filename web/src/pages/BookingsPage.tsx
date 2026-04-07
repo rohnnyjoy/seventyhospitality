@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { DatePicker, Text, TabButton, Tag } from 'octahedron';
+import { DatePicker, Text, Tag, TabPanelContent, TabPanelGroup, TabPanelList, TabPanelTab, pageStyles } from 'octahedron';
 import { api } from '../lib/api';
 import { AppShell } from '../components/AppShell';
 import { AvailabilityGrid } from '../components/AvailabilityGrid';
@@ -95,62 +95,61 @@ export function BookingsPage() {
   return (
     <AppShell>
       <div className={styles.page}>
-        <div className={styles.header}>
-          <div className={styles.headerLeft}>
-            <Text variant="label" style={{ fontWeight: 'var(--octa-font-weight-semibold)' }}>
+        <div className={pageStyles.headerRow}>
+          <div className={pageStyles.headerLeft}>
+            <Text variant="label" className={styles.dateTitle}>
               {formatDisplayDate(selectedDate)}
             </Text>
             {selectedDate === today && <Tag variant="accent">Today</Tag>}
           </div>
-          <DatePicker
-            value={selectedDate}
-            onValueChange={(v) => v && setSelectedDate(v)}
-            min={today}
-            max={maxDate}
-          />
+          <div className={pageStyles.headerActions}>
+            <DatePicker
+              value={selectedDate}
+              onValueChange={(v) => v && setSelectedDate(v)}
+              min={today}
+              max={maxDate}
+            />
+          </div>
         </div>
 
-        <div
-          style={{ display: 'flex', gap: 'var(--octa-space-1)' }}
-          role="tablist"
-          aria-label="Booking sections"
+        <TabPanelGroup
+          value={tab}
+          onValueChange={(value) => navigate(`/bookings/${value}`)}
+          className={styles.tabGroup}
         >
-          <TabButton variant="cutout" role="tab" aria-selected={tab === 'courts'} active={tab === 'courts'} onClick={() => navigate('/bookings/courts')}>
-            Courts
-          </TabButton>
-          <TabButton variant="cutout" role="tab" aria-selected={tab === 'showers'} active={tab === 'showers'} onClick={() => navigate('/bookings/showers')}>
-            Showers
-          </TabButton>
-        </div>
+          <TabPanelList className={pageStyles.tabPanelListInset}>
+            <TabPanelTab value="courts">Courts</TabPanelTab>
+            <TabPanelTab value="showers">Showers</TabPanelTab>
+          </TabPanelList>
 
-        <div className={styles.content}>
-          {tab === 'courts' && (
-            <div className={styles.gridArea}>
-              <AvailabilityGrid
-                key={`courts-${selectedDate}-${refreshKey}`}
-                type="court"
-                facilities={courts}
-                date={selectedDate}
-                onSlotClick={(fId, slot) => handleSlotClick('court', fId, slot)}
-                onBookingClick={handleBookingClick}
-              />
-            </div>
-          )}
+          <div className={styles.content}>
+            <TabPanelContent value="courts" className={styles.tabContent}>
+              <div className={styles.gridArea}>
+                <AvailabilityGrid
+                  key={`courts-${selectedDate}-${refreshKey}`}
+                  type="court"
+                  facilities={courts}
+                  date={selectedDate}
+                  onSlotClick={(fId, slot) => handleSlotClick('court', fId, slot)}
+                  onBookingClick={handleBookingClick}
+                />
+              </div>
+            </TabPanelContent>
 
-          {tab === 'showers' && (
-            <div className={styles.gridArea}>
-              <AvailabilityGrid
-                key={`showers-${selectedDate}-${refreshKey}`}
-                type="shower"
-                facilities={showers}
-                date={selectedDate}
-                onSlotClick={(fId, slot) => handleSlotClick('shower', fId, slot)}
-                onBookingClick={handleBookingClick}
-              />
-            </div>
-          )}
-
-        </div>
+            <TabPanelContent value="showers" className={styles.tabContent}>
+              <div className={styles.gridArea}>
+                <AvailabilityGrid
+                  key={`showers-${selectedDate}-${refreshKey}`}
+                  type="shower"
+                  facilities={showers}
+                  date={selectedDate}
+                  onSlotClick={(fId, slot) => handleSlotClick('shower', fId, slot)}
+                  onBookingClick={handleBookingClick}
+                />
+              </div>
+            </TabPanelContent>
+          </div>
+        </TabPanelGroup>
 
         {confirm && (
           <BookingConfirmDialog

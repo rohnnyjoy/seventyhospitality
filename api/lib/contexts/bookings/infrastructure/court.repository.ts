@@ -42,6 +42,14 @@ export class CourtRepository {
     return this.prisma.court.findUnique({ where: { id } }) as unknown as Court | null;
   }
 
+  async listByIds(ids: string[]): Promise<Court[]> {
+    if (ids.length === 0) return [];
+    return this.prisma.court.findMany({
+      where: { id: { in: ids } },
+      orderBy: { name: 'asc' },
+    }) as unknown as Court[];
+  }
+
   async create(data: CreateCourtInput): Promise<Court> {
     return this.prisma.court.create({ data }) as unknown as Court;
   }

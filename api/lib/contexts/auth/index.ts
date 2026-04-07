@@ -7,4 +7,5 @@ export {
   AuthenticationError,
   InvalidTokenError,
   SessionExpiredError,
+  NotAuthorizedError,
 } from './domain';

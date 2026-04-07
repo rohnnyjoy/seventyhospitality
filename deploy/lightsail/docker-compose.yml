@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    env_file:
+      - /opt/seventy/runtime/.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /opt/seventy/data/postgres:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: /opt/seventy/api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    env_file:
+      - /opt/seventy/runtime/.env
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /opt/seventy/deploy/lightsail/Caddyfile:/etc/caddy/Caddyfile:ro
+      - /opt/seventy/web:/opt/seventy/web:ro
+      - /opt/seventy/caddy/data:/data
+      - /opt/seventy/caddy/config:/config

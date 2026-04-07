@@ -1,0 +1,10 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-3);
+}
+
+.summary {
+  font-size: var(--octa-font-size-body);
+  color: var(--octa-text);
+}

@@ -1,45 +1,54 @@
-.container {
+.page {
   display: flex;
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  padding: var(--octa-space-4);
   background: var(--octa-bg-app);
 }
 
-.card {
+.container {
   display: flex;
   flex-direction: column;
-  gap: var(--octa-space-4);
-  padding: var(--octa-space-6);
-  background: var(--octa-surface);
-  border: 1px solid var(--octa-border);
-  border-radius: var(--octa-control-radius);
+  gap: var(--octa-space-5);
   width: 100%;
-  max-width: 400px;
+  max-width: 320px;
 }
 
-.logoWrap {
+.header {
   display: flex;
-  justify-content: center;
-}
-
-.title {
-  font-size: var(--octa-font-size-title);
-  font-weight: var(--octa-font-weight-semibold);
-  color: rgb(61, 83, 65);
-  text-align: center;
-}
-
-.text {
-  font-size: var(--octa-font-size-body);
-  color: var(--octa-muted);
-  text-align: center;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--octa-space-4);
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: var(--octa-space-3);
+  gap: var(--octa-space-4);
+}
+
+.submitButton {
+  width: 100%;
+  justify-content: center;
+}
+
+.textButton {
+  display: block;
+  width: 100%;
+  padding: var(--octa-space-2) 0;
+  background: none;
+  border: none;
+  color: var(--octa-link);
+  font-size: var(--octa-font-size-body);
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  border-radius: var(--octa-control-radius);
+}
+
+.textButton:hover {
+  text-decoration: underline;
 }
 
 .error {

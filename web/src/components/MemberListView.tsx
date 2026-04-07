@@ -17,7 +17,6 @@ import {
   listColumnOptions,
   createFilterId,
   type TableFilter,
-
 } from 'octahedron';
 import { MembershipStatus } from './MembershipStatus';
 import styles from './MemberListView.module.css';
@@ -81,13 +80,13 @@ interface Props {
   onAddMember?: () => void;
 }
 
-export function MemberListView({ members, loading, onRefresh, onRowClick, onAddMember }: Props) {
+export function MemberListView({ members, loading, onRowClick, onAddMember }: Props) {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<TableFilter<FilterColumnId>[]>([]);
   const [addFilterOpen, setAddFilterOpen] = useState(false);
 
-  const addFilter = useCallback((filter: Omit<TableFilter<string>, 'id'>) => {
+  const addFilter = useCallback((filter: Omit<TableFilter<FilterColumnId>, 'id'>) => {
     setFilters((prev) => [...prev, { ...filter, id: createFilterId() }]);
   }, []);
 
@@ -95,7 +94,7 @@ export function MemberListView({ members, loading, onRefresh, onRowClick, onAddM
     setFilters((prev) => prev.filter((f) => f.id !== id));
   }, []);
 
-  const updateFilter = useCallback((id: string, next: Omit<TableFilter<string>, 'id'>) => {
+  const updateFilter = useCallback((id: string, next: Omit<TableFilter<FilterColumnId>, 'id'>) => {
     setFilters((prev) => prev.map((f) => (f.id === id ? { ...next, id } : f)));
   }, []);
 
@@ -165,7 +164,7 @@ export function MemberListView({ members, loading, onRefresh, onRowClick, onAddM
             placeholder="Search members..."
           />
 
-<Button color="primary" onClick={onAddMember ?? (() => navigate('/members/new'))}>
+          <Button color="primary" onClick={onAddMember ?? (() => navigate('/members/new'))}>
             Add Member
           </Button>
         </div>
@@ -185,11 +184,12 @@ export function MemberListView({ members, loading, onRefresh, onRowClick, onAddM
                     label: col?.label ?? filter.columnId,
                     options: filterColumns.map((c) => ({ value: c.id, label: c.label })),
                     onValueChange: (nextCol) => {
-                      const nextDef = filterColumnsById[nextCol];
+                      const nextColumnId = nextCol as FilterColumnId;
+                      const nextDef = filterColumnsById[nextColumnId];
                       const ops = listTableFilterOperators(nextDef?.valueInput ?? 'text');
                       const nextOp = ops[0]?.value ?? 'is';
-                      const nextVal = nextDef?.valueInput === 'select' ? (filterValueOptions.get(nextCol)?.[0] ?? '') : '';
-                      updateFilter(filter.id, { columnId: nextCol as FilterColumnId, operator: nextOp, value: nextVal, combinator: filter.combinator });
+                      const nextVal = nextDef?.valueInput === 'select' ? (filterValueOptions.get(nextColumnId)?.[0] ?? '') : '';
+                      updateFilter(filter.id, { columnId: nextColumnId, operator: nextOp, value: nextVal, combinator: filter.combinator });
                     },
                   }}
                   operator={{

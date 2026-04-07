@@ -21,7 +21,7 @@ export class MembershipService {
     private readonly stripeGateway: StripeGateway,
   ) {}
 
-  async createCheckoutSession(memberId: string, planId: string, memberEmail: string, memberName: string, stripeCustomerId: string | null) {
+  async createCheckoutSession(memberId: string, planId: string, memberEmail: string, memberName: string, stripeCustomerId: string | null): Promise<{ url: string; newStripeCustomerId: string | null }> {
     const plan = await this.planRepo.getById(planId);
     if (!plan) throw new PlanNotFoundError(planId);
 
@@ -30,11 +30,14 @@ export class MembershipService {
 
     // Ensure Stripe customer exists
     let customerId = stripeCustomerId;
+    let newStripeCustomerId: string | null = null;
     if (!customerId) {
       customerId = await this.stripeGateway.createCustomer(memberEmail, memberName, memberId);
+      newStripeCustomerId = customerId;
     }
 
-    return this.stripeGateway.createCheckoutSession(customerId, plan.stripePriceId, memberId, planId);
+    const url = await this.stripeGateway.createCheckoutSession(customerId, plan.stripePriceId, memberId, planId);
+    return { url, newStripeCustomerId };
   }
 
   async createPortalSession(memberId: string, stripeCustomerId: string | null) {

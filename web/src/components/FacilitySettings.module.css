@@ -5,26 +5,36 @@
   min-height: 0;
 }
 
-.addRow {
-  appearance: none;
-  border: none;
-  background: none;
-  width: 100%;
-  height: var(--octa-table-row-height);
+.tabGroup {
   display: flex;
-  align-items: center;
-  gap: var(--octa-space-1);
-  padding: 0 var(--octa-space-3);
-  box-shadow: inset 0 -1px 0 var(--octa-border);
-  font-size: var(--octa-font-size-body);
-  color: var(--octa-muted);
-  cursor: pointer;
-}
-
-.addRow:hover {
-  background: var(--octa-hover-bg);
-  color: var(--octa-text);
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .tableArea {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.tabContent {
+  min-height: 0;
+}
+
+.modalBody {
+  padding: var(--octa-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-3);
+}
+
+.hoursRow {
+  display: flex;
+  align-items: center;
+  gap: var(--octa-space-2);
+}
+
+.timeInput {
+  width: 80px;
 }

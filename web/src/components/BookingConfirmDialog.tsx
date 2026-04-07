@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ConfirmDialog, Banner, Select, type SelectOption } from 'octahedron';
 import { api, ApiError } from '../lib/api';
 import { FormField } from './FormField';
+import styles from './BookingConfirmDialog.module.css';
 
 interface Props {
   type: 'court' | 'shower';
@@ -72,13 +73,13 @@ export function BookingConfirmDialog({
       cancelText="Cancel"
       loading={loading}
     >
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--octa-space-3)' }}>
-        <div style={{ fontSize: 'var(--octa-font-size-body)', color: 'var(--octa-text)' }}>
+      <div className={styles.body}>
+        <div className={styles.summary}>
           <strong>{facilityName}</strong> &middot; {date} &middot; {startTime}–{endTime}
         </div>
 
         <FormField label="Member">
-          {(id) => (
+          {() => (
             <Select
               options={memberOptions}
               value={memberId}

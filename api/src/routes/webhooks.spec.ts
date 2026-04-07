@@ -2,7 +2,7 @@ import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
 import type Stripe from 'stripe';
 
-const { mockStripeGateway, mockMembershipService } = vi.hoisted(() => ({
+const { mockStripeGateway, mockMembershipService, mockMemberRepo } = vi.hoisted(() => ({
   mockStripeGateway: {
     verifyWebhookSignature: vi.fn(),
     retrieveSubscription: vi.fn(),
@@ -17,11 +17,15 @@ const { mockStripeGateway, mockMembershipService } = vi.hoisted(() => ({
     handleInvoicePaid: vi.fn(),
     handleInvoicePaymentFailed: vi.fn(),
   },
+  mockMemberRepo: {
+    setStripeCustomerId: vi.fn().mockResolvedValue(undefined),
+  },
 }));
 
 vi.mock('@/lib/container', () => ({
   stripeGateway: mockStripeGateway,
   membershipService: mockMembershipService,
+  memberRepo: mockMemberRepo,
 }));
 
 // Import after mocking

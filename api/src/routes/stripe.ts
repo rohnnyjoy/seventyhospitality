@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { memberService, membershipService } from '@/lib/container';
+import { memberService, membershipService, memberRepo } from '@/lib/container';
 import { createCheckoutSchema, createPortalSchema } from '@/src/lib/validation';
 import { success, error } from '@/src/lib/responses';
 import { MemberNotFoundError } from '@/lib/contexts/members';
@@ -13,13 +13,16 @@ export async function stripeRoutes(app: FastifyInstance) {
 
     try {
       const member = await memberService.getById(parsed.data.memberId);
-      const url = await membershipService.createCheckoutSession(
+      const { url, newStripeCustomerId } = await membershipService.createCheckoutSession(
         member.id,
         parsed.data.planId,
         member.email,
         `${member.firstName} ${member.lastName}`,
         member.stripeCustomerId,
       );
+      if (newStripeCustomerId) {
+        await memberRepo.setStripeCustomerId(member.id, newStripeCustomerId);
+      }
       return success(reply, { url });
     } catch (e) {
       if (e instanceof MemberNotFoundError) return error(reply, 'NOT_FOUND', e.message, 404);

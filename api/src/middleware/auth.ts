@@ -11,6 +11,8 @@ declare module 'fastify' {
 const PUBLIC_PREFIXES = ['/api/auth/', '/api/webhooks/', '/api/cron/', '/api/health'];
 
 function isPublic(url: string): boolean {
+  // Only enforce auth on API routes
+  if (!url.startsWith('/api/')) return true;
   return PUBLIC_PREFIXES.some((p) => url.startsWith(p));
 }
 

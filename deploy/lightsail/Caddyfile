@@ -1,0 +1,21 @@
+admin.club70.nyc, http://98.90.216.173 {
+  route {
+    encode gzip
+
+    @backend path /api/* /uploads/*
+    handle @backend {
+      reverse_proxy api:3001
+    }
+
+    handle {
+      root * /opt/seventy/web
+      try_files {path} /index.html
+      file_server
+    }
+  }
+}
+
+api.club70.nyc {
+  encode gzip
+  reverse_proxy api:3001
+}

@@ -206,4 +206,12 @@ Stripe webhooks arrive at `/api/webhooks/stripe`:
 
 ## Scheduled Tasks
 
-Vercel Cron runs weekly membership sync (`/api/cron/sync-memberships`) to reconcile local DB with Stripe. Configured in `vercel.json`.
+Scheduled maintenance should be platform-neutral:
+
+- the API exposes authenticated cron routes under `/api/cron/*` for schedulers that trigger URLs
+- standalone job entrypoints can be run directly from whatever scheduler hosts the app
+
+The stale event-image cleanup job is exposed both ways:
+
+- HTTP: `POST /api/cron/cleanup-event-images`
+- CLI: `npm run job:cleanup-event-images`

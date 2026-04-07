@@ -42,8 +42,12 @@ export const bookingRules = {
     now: Date,
   ): void {
     const [h, m] = bookingStartTime.split(':').map(Number);
-    const bookingStart = new Date(bookingDate);
-    bookingStart.setHours(h, m, 0, 0);
+    const bookingStart = new Date(
+      bookingDate.getUTCFullYear(),
+      bookingDate.getUTCMonth(),
+      bookingDate.getUTCDate(),
+      h, m, 0, 0,
+    );
 
     const deadlineMs = deadlineMinutes * 60 * 1000;
     const cutoff = new Date(bookingStart.getTime() - deadlineMs);

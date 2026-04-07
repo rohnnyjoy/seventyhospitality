@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Input, Button, TextLink } from 'octahedron';
+import { Input, Button, Text, Banner } from 'octahedron';
 import { FormField } from '../components/FormField';
 import { SeventyLogo } from '../components/SeventyLogo';
 import { api } from '../lib/api';
@@ -26,46 +26,46 @@ export function SignInPage() {
     }
   }
 
-  if (sent) {
-    return (
-      <div className={styles.container}>
-        <div className={styles.card}>
-          <h1 className={styles.title}>Check your email</h1>
-          <p className={styles.text}>
-            We sent a sign-in link to <strong>{email}</strong>.
-          </p>
-          <TextLink onClick={() => setSent(false)}>Use a different email</TextLink>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={styles.container}>
-      <div className={styles.card}>
-        <div className={styles.logoWrap}>
+    <div className={styles.page}>
+      <div className={styles.container}>
+        <div className={styles.header}>
           <SeventyLogo size={48} />
+          <Text variant="title">Sign in</Text>
         </div>
-        <h1 className={styles.title}>Seventy</h1>
-        <p className={styles.text}>Sign in with your email address</p>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <FormField label="Email">
-            {(id) => (
-              <Input
-                id={id}
-                type="email"
-                value={email}
-                onValueChange={setEmail}
-                placeholder="admin@seventy.club"
-                autoFocus
-              />
-            )}
-          </FormField>
-          <Button type="submit" color="accent" loading={loading}>
-            Send sign-in link
-          </Button>
-          {error && <p className={styles.error}>{error}</p>}
-        </form>
+
+        {error && <Banner intent="danger">{error}</Banner>}
+
+        {sent ? (
+          <>
+            <Banner intent="success">
+              We sent a sign-in link to <strong>{email}</strong>.
+            </Banner>
+            <button type="button" className={styles.textButton} onClick={() => setSent(false)}>
+              Use a different email
+            </button>
+          </>
+        ) : (
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <FormField label="Email address">
+              {(id) => (
+                <Input
+                  id={id}
+                  type="email"
+                  value={email}
+                  onValueChange={setEmail}
+                  placeholder="you@example.com"
+                  autoComplete="email"
+                  autoFocus
+                  fill
+                />
+              )}
+            </FormField>
+            <Button type="submit" color="primary" loading={loading} className={styles.submitButton}>
+              Send magic link
+            </Button>
+          </form>
+        )}
       </div>
     </div>
   );

@@ -18,9 +18,9 @@ variable "environment" {
   default = "prod"
 }
 
-variable "db_instance_class" {
-  type    = string
-  default = "db.t4g.micro"
+variable "database_url" {
+  type      = string
+  sensitive = true
 }
 
 variable "admin_domain" {
