@@ -6,7 +6,7 @@ describe('JwtService', () => {
   describe('sign + verify round-trip', () => {
     it('returns the original payload claims', async () => {
       const jwt = new JwtService(SECRET);
-      const payload = { sub: 'usr_1', sid: 'ses_1', email: 'test@example.com' };
+      const payload = { sub: 'usr_1', sid: 'ses_1', email: 'test@example.com', role: 'admin' };
 
       const token = await jwt.sign(payload);
       const result = await jwt.verify(token);
@@ -19,7 +19,7 @@ describe('JwtService', () => {
 
     it('includes issuer claim', async () => {
       const jwt = new JwtService(SECRET);
-      const token = await jwt.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com' });
+      const token = await jwt.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com', role: 'admin' });
       const result = await jwt.verify(token);
 
       expect(result!.iss).toBe('seventy');
@@ -27,7 +27,7 @@ describe('JwtService', () => {
 
     it('includes iat and exp claims', async () => {
       const jwt = new JwtService(SECRET);
-      const token = await jwt.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com' });
+      const token = await jwt.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com', role: 'admin' });
       const result = await jwt.verify(token);
 
       expect(result!.iat).toBeTypeOf('number');
@@ -48,7 +48,7 @@ describe('JwtService', () => {
       const jwt1 = new JwtService(SECRET);
       const jwt2 = new JwtService('different-secret-key-also-32-chars-long');
 
-      const token = await jwt1.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com' });
+      const token = await jwt1.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com', role: 'admin' });
       const result = await jwt2.verify(token);
 
       expect(result).toBeNull();
@@ -65,7 +65,7 @@ describe('JwtService', () => {
   describe('sign', () => {
     it('produces a three-part JWT string', async () => {
       const jwt = new JwtService(SECRET);
-      const token = await jwt.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com' });
+      const token = await jwt.sign({ sub: 'usr_1', sid: 'ses_1', email: 'a@b.com', role: 'admin' });
 
       expect(typeof token).toBe('string');
       expect(token.split('.')).toHaveLength(3);
