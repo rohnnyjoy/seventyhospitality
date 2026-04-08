@@ -163,25 +163,31 @@ async function main() {
   console.log(`  Memberships: 3 active, 1 annual, 1 past_due, 1 canceling, 1 canceled, 3 none${stripe ? ' (active ones synced to Stripe)' : ''}`);
 
   // ── Admin Notes ──
-  const notes = [
-    { member: created[0], content: 'Founding member. Plays doubles on Tuesday evenings.' },
-    { member: created[0], content: 'Updated phone number per request.' },
-    { member: created[4], content: 'Payment failed — reached out via email, waiting for response.' },
-    { member: created[5], content: 'Requested cancellation — moving out of area.' },
-    { member: created[6], content: 'May return next season.' },
-  ];
+  const adminUser = await prisma.user.findFirst({ where: { role: 'admin' } });
 
-  await prisma.adminNote.deleteMany({
-    where: { authorId: 'seed_admin' },
-  });
+  if (adminUser) {
+    const notes = [
+      { member: created[0], content: 'Founding member. Plays doubles on Tuesday evenings.' },
+      { member: created[0], content: 'Updated phone number per request.' },
+      { member: created[4], content: 'Payment failed — reached out via email, waiting for response.' },
+      { member: created[5], content: 'Requested cancellation — moving out of area.' },
+      { member: created[6], content: 'May return next season.' },
+    ];
 
-  for (const n of notes) {
-    await prisma.adminNote.create({
-      data: { memberId: n.member.id, authorId: 'seed_admin', content: n.content },
+    await prisma.adminNote.deleteMany({
+      where: { authorId: adminUser.id },
     });
-  }
 
-  console.log(`  Notes: ${notes.length}`);
+    for (const n of notes) {
+      await prisma.adminNote.create({
+        data: { memberId: n.member.id, authorId: adminUser.id, content: n.content },
+      });
+    }
+
+    console.log(`  Notes: ${notes.length}`);
+  } else {
+    console.log('  Notes: skipped (no admin user)');
+  }
 
   // ── Courts ──
   const courts = [
@@ -221,7 +227,7 @@ async function main() {
     {
       id: 'seed-sunday-open-play',
       title: 'Sunday Open Play',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1626224583764-f87db24ac4ea?w=800&h=400&fit=crop',
       details: 'All-level social play. Courts 1 and 2 are reserved for drop-in ladders, doubles rotations, and member guests.',
       startsAt: nextWeekdayAt(0, 10),
       endsAt: nextWeekdayAt(0, 20),
@@ -232,7 +238,7 @@ async function main() {
     {
       id: 'seed-skills-clinic',
       title: 'Serve + Return Clinic',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1613918431703-aa50889e3be2?w=800&h=400&fit=crop',
       details: 'Small-group coaching focused on first-ball patterns. Court 3 is blocked for instruction and feed drills.',
       startsAt: nextWeekdayAt(3, 18),
       endsAt: nextWeekdayAt(3, 20),
@@ -243,7 +249,7 @@ async function main() {
     {
       id: 'seed-member-social',
       title: 'Member Social Hour',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=400&fit=crop',
       details: 'Low-key social in the lounge with no court claim, useful for testing events that should not affect bookings.',
       startsAt: nextWeekdayAt(5, 19),
       endsAt: nextWeekdayAt(5, 22),
@@ -254,7 +260,7 @@ async function main() {
     {
       id: 'seed-ladder-finals',
       title: 'Winter Ladder Finals',
-      imageUrl: null,
+      imageUrl: 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?w=800&h=400&fit=crop',
       details: 'Completed event left in the system so the admin UI can exercise past-event states and editing.',
       startsAt: daysFromNowAt(-7, 17),
       endsAt: daysFromNowAt(-7, 21),
