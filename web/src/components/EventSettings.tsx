@@ -79,14 +79,9 @@ const columns: DataTableColumn<ClubEvent>[] = [
   {
     name: 'Status',
     cell: (row) => (
-      <div className={styles.statusCell}>
-        <Tag variant={row.active ? 'success' : 'neutral'}>{row.active ? 'Active' : 'Inactive'}</Tag>
-        <Tag variant={new Date(row.endsAt).getTime() < Date.now() ? 'neutral' : 'accent'}>
-          {new Date(row.endsAt).getTime() < Date.now() ? 'Past' : 'Upcoming'}
-        </Tag>
-      </div>
+      <Tag variant={row.active ? 'success' : 'neutral'}>{row.active ? 'Active' : 'Inactive'}</Tag>
     ),
-    maxWidth: 180,
+    maxWidth: 100,
   },
 ];
 
