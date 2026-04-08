@@ -595,9 +595,9 @@ function EventEditModal({
               ))
             )}
         </FieldGroup>
+        </div>
 
         <Toggle checked={active} onValueChange={setActive} label="Active" />
-        </div>
 
         {inactiveSelectedCourts.length > 0 ? (
           <Callout intent="warning" title="Inactive courts selected">
