@@ -26,10 +26,10 @@ export function SeventyLogo({
           <rect x="0" y="0" width="91" height="105" />
         </clipPath>
       </defs>
-      <circle cx="56" cy="36" r="30" stroke="currentColor" strokeWidth="9" fill="none" />
+      <circle cx="56" cy="36" r="30" stroke="var(--octa-brand, #4a7c59)" strokeWidth="9" fill="none" />
       <path
         d="M 8,36 L 56,36 L 20,105"
-        stroke="currentColor"
+        stroke="var(--octa-brand, #4a7c59)"
         strokeWidth="9"
         strokeLinejoin="miter"
         strokeLinecap="square"
