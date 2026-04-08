@@ -6,8 +6,54 @@ datasource db {
   provider = "postgresql"
 }
 
+// ── Identity ──
+
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  name  String
+  role  String @default("member") // "admin" | "member"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions Session[]
+  member   Member?
+  notes    AdminNote[] @relation("noteAuthor")
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id
+  userId       String
+  expiresAt    DateTime
+  lastActiveAt DateTime
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model MagicLinkToken {
+  id        String    @id @default(cuid())
+  email     String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+  @@map("magic_link_tokens")
+}
+
+// ── Members ──
+
 model Member {
   id        String   @id @default(cuid())
+  userId    String?  @unique
   email     String   @unique
   firstName String
   lastName  String
@@ -18,6 +64,7 @@ model Member {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  user       User?        @relation(fields: [userId], references: [id])
   membership Membership?
   notes      AdminNote[]
   bookings   Booking[]
@@ -63,16 +110,19 @@ model Membership {
 model AdminNote {
   id       String @id @default(cuid())
   memberId String
-  authorId String // Clerk user ID
+  authorId String
   content  String
 
   createdAt DateTime @default(now())
 
   member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  author User   @relation("noteAuthor", fields: [authorId], references: [id])
 
   @@index([memberId])
   @@map("admin_notes")
 }
+
+// ── Events ──
 
 model Event {
   id         String   @id @default(cuid())
@@ -102,43 +152,7 @@ model StreamCheckpoint {
   @@map("stream_checkpoints")
 }
 
-model AdminUser {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String
-  role      String   @default("admin")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("admin_users")
-}
-
-model Session {
-  id           String   @id
-  userId       String
-  email        String
-  expiresAt    DateTime
-  lastActiveAt DateTime
-  createdAt    DateTime @default(now())
-
-  @@index([email])
-  @@index([userId])
-  @@map("sessions")
-}
-
-model MagicLinkToken {
-  id        String    @id @default(cuid())
-  email     String
-  tokenHash String    @unique
-  expiresAt DateTime
-  usedAt    DateTime?
-  createdAt DateTime  @default(now())
-
-  @@index([email])
-  @@map("magic_link_tokens")
-}
-
-// ── Bookings BC ──
+// ── Bookings ──
 
 model Court {
   id                          String   @id @default(cuid())

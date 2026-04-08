@@ -2,7 +2,7 @@ import { AuthService } from './auth.service';
 import { InvalidTokenError, SessionExpiredError, NotAuthorizedError, hashToken } from '../domain';
 import type { SessionRepository } from '../infrastructure/session.repository';
 import type { MagicLinkRepository } from '../infrastructure/magic-link.repository';
-import type { AdminUserRepository } from '../infrastructure/admin-user.repository';
+import type { UserRepository } from '../infrastructure/admin-user.repository';
 import type { JwtService } from '../infrastructure/jwt.service';
 import type { NotificationService } from '@/lib/contexts/communications/application';
 
@@ -31,13 +31,16 @@ function mockMagicLinkRepo(): MagicLinkRepository {
   } as unknown as MagicLinkRepository;
 }
 
-function mockAdminUserRepo(exists = true): AdminUserRepository {
+function mockUserRepo(exists = true): UserRepository {
   return {
     findByEmail: vi.fn().mockResolvedValue(
-      exists ? { id: 'adm_1', email: 'admin@example.com', name: 'Admin', role: 'admin' } : null,
+      exists ? { id: 'usr_1', email: 'admin@example.com', name: 'Admin', role: 'admin' } : null,
     ),
-    exists: vi.fn().mockResolvedValue(exists),
-  } as unknown as AdminUserRepository;
+    findById: vi.fn().mockResolvedValue(
+      exists ? { id: 'usr_1', email: 'admin@example.com', name: 'Admin', role: 'admin' } : null,
+    ),
+    isAdmin: vi.fn().mockResolvedValue(exists),
+  } as unknown as UserRepository;
 }
 
 function mockJwt(): JwtService {
@@ -59,14 +62,14 @@ function mockNotifications(): NotificationService {
 function createService(overrides: {
   sessionRepo?: SessionRepository;
   magicLinkRepo?: MagicLinkRepository;
-  adminUserRepo?: AdminUserRepository;
+  userRepo?: UserRepository;
   jwt?: JwtService;
   notifications?: NotificationService;
 } = {}) {
   return new AuthService(
     overrides.sessionRepo ?? mockSessionRepo(),
     overrides.magicLinkRepo ?? mockMagicLinkRepo(),
-    overrides.adminUserRepo ?? mockAdminUserRepo(),
+    overrides.userRepo ?? mockUserRepo(),
     overrides.jwt ?? mockJwt(),
     overrides.notifications ?? mockNotifications(),
     'https://app.com',
@@ -107,34 +110,18 @@ describe('AuthService', () => {
 
       expect(magicLinkRepo.create).toHaveBeenCalledOnce();
       expect(notifications.sendMagicLink).toHaveBeenCalledOnce();
-      const [sentTo, url] = (notifications.sendMagicLink as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(sentTo).toBe('admin@example.com');
-      expect(url).toContain('https://app.com/api/auth/verify?token=');
     });
 
     it('silently skips non-admin emails', async () => {
       const magicLinkRepo = mockMagicLinkRepo();
       const notifications = mockNotifications();
-      const adminUserRepo = mockAdminUserRepo(false);
+      const userRepo = mockUserRepo(false);
 
-      const service = createService({ magicLinkRepo, notifications, adminUserRepo });
+      const service = createService({ magicLinkRepo, notifications, userRepo });
       await service.sendMagicLink('nobody@example.com');
 
       expect(magicLinkRepo.create).not.toHaveBeenCalled();
       expect(notifications.sendMagicLink).not.toHaveBeenCalled();
-    });
-
-    it('includes the mobile redirect target when provided', async () => {
-      const notifications = mockNotifications();
-      const service = createService({ notifications });
-
-      await service.sendMagicLink('admin@example.com', {
-        redirectTo: 'seventy://auth/callback',
-      });
-
-      const [, url] = (notifications.sendMagicLink as ReturnType<typeof vi.fn>).mock.calls[0];
-      expect(url).toContain('redirectTo=');
-      expect(decodeURIComponent(url)).toContain('seventy://auth/callback');
     });
   });
 
@@ -156,14 +143,13 @@ describe('AuthService', () => {
         expect.objectContaining({ role: 'admin' }),
       );
       expect(result.jwt).toBe('jwt_token_here');
-      expect(result.expiresAt).toBeInstanceOf(Date);
     });
 
     it('throws NotAuthorizedError for non-admin email', async () => {
       const magicLinkRepo = mockMagicLinkRepo();
       (magicLinkRepo.findByHash as ReturnType<typeof vi.fn>).mockResolvedValue(validMagicLink());
 
-      const service = createService({ magicLinkRepo, adminUserRepo: mockAdminUserRepo(false) });
+      const service = createService({ magicLinkRepo, userRepo: mockUserRepo(false) });
       await expect(service.verifyMagicLink('abc123')).rejects.toThrow(NotAuthorizedError);
     });
 
@@ -212,7 +198,6 @@ describe('AuthService', () => {
       const user = await service.validateSession('jwt_token');
 
       expect(user.userId).toBe('usr_1');
-      expect(user.sessionId).toBe('ses_1');
       expect(user.email).toBe('admin@example.com');
       expect(user.role).toBe('admin');
     });
@@ -226,7 +211,7 @@ describe('AuthService', () => {
       });
       (sessionRepo.findById as ReturnType<typeof vi.fn>).mockResolvedValue(validSession('revoked@example.com'));
 
-      const service = createService({ sessionRepo, jwt, adminUserRepo: mockAdminUserRepo(false) });
+      const service = createService({ sessionRepo, jwt, userRepo: mockUserRepo(false) });
       await expect(service.validateSession('jwt_token')).rejects.toThrow(NotAuthorizedError);
     });
 

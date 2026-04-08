@@ -5,22 +5,42 @@ import type { Session } from '../domain';
 export class SessionRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async create(email: string, expiresAt: Date): Promise<Session> {
-    const userId = await this.getOrCreateUserId(email);
-
-    return this.prisma.session.create({
+  async create(userId: string, expiresAt: Date): Promise<Session> {
+    const session = await this.prisma.session.create({
       data: {
         id: createId(),
         userId,
-        email,
         expiresAt,
         lastActiveAt: new Date(),
       },
-    }) as unknown as Session;
+      include: { user: { select: { email: true } } },
+    });
+
+    return {
+      id: session.id,
+      userId: session.userId,
+      email: (session as any).user.email,
+      expiresAt: session.expiresAt,
+      lastActiveAt: session.lastActiveAt,
+      createdAt: session.createdAt,
+    };
   }
 
   async findById(id: string): Promise<Session | null> {
-    return this.prisma.session.findUnique({ where: { id } }) as unknown as Session | null;
+    const session = await this.prisma.session.findUnique({
+      where: { id },
+      include: { user: { select: { email: true } } },
+    });
+    if (!session) return null;
+
+    return {
+      id: session.id,
+      userId: session.userId,
+      email: (session as any).user.email,
+      expiresAt: session.expiresAt,
+      lastActiveAt: session.lastActiveAt,
+      createdAt: session.createdAt,
+    };
   }
 
   async updateLastActive(id: string): Promise<void> {
@@ -34,9 +54,9 @@ export class SessionRepository {
     await this.prisma.session.delete({ where: { id } }).catch(() => {});
   }
 
-  async evictOldest(email: string, keepCount: number): Promise<void> {
+  async evictOldest(userId: string, keepCount: number): Promise<void> {
     const sessions = await this.prisma.session.findMany({
-      where: { email },
+      where: { userId },
       orderBy: { lastActiveAt: 'desc' },
       skip: keepCount,
       select: { id: true },
@@ -47,17 +67,5 @@ export class SessionRepository {
         where: { id: { in: sessions.map((s) => s.id) } },
       });
     }
-  }
-
-  private async getOrCreateUserId(email: string): Promise<string> {
-    // For MVP, userId = a stable hash of email. In a full system this would
-    // be a User table lookup/create.
-    const existing = await this.prisma.session.findFirst({
-      where: { email },
-      select: { userId: true },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    return existing?.userId ?? createId();
   }
 }

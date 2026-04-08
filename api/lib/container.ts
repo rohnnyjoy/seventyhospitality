@@ -6,7 +6,7 @@ import { EventReplay } from './infrastructure/event-replay';
 // Repositories + infrastructure
 import { MemberRepository } from '@/lib/contexts/members/infrastructure';
 import { MembershipRepository, PlanRepository, StripeGateway } from '@/lib/contexts/memberships/infrastructure';
-import { SessionRepository, MagicLinkRepository, JwtService, AdminUserRepository } from '@/lib/contexts/auth/infrastructure';
+import { SessionRepository, MagicLinkRepository, JwtService, UserRepository } from '@/lib/contexts/auth/infrastructure';
 import { ResendAdapter } from '@/lib/contexts/communications/infrastructure';
 import { CourtRepository, ShowerRepository, BookingRepository, PrismaMembershipChecker } from '@/lib/contexts/bookings/infrastructure';
 import { ClubEventRepository } from '@/lib/contexts/events/infrastructure';
@@ -90,13 +90,13 @@ export const clubEventService = new ClubEventService(clubEventRepo, bookingRepo,
 
 const sessionRepo = new SessionRepository(db);
 const magicLinkRepo = new MagicLinkRepository(db);
-export const adminUserRepo = new AdminUserRepository(db);
+export const userRepo = new UserRepository(db);
 const jwtService = new JwtService(process.env.JWT_SECRET ?? 'dev-fallback-secret-not-for-production');
 
 export const authService = new AuthService(
   sessionRepo,
   magicLinkRepo,
-  adminUserRepo,
+  userRepo,
   jwtService,
   notificationService,
   process.env.PUBLIC_BASE_URL ?? process.env.WEB_URL ?? process.env.API_URL ?? 'http://localhost:5173',

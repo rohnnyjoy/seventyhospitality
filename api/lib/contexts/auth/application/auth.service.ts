@@ -12,7 +12,7 @@ import {
 } from '../domain';
 import type { SessionRepository } from '../infrastructure/session.repository';
 import type { MagicLinkRepository } from '../infrastructure/magic-link.repository';
-import type { AdminUserRepository } from '../infrastructure/admin-user.repository';
+import type { UserRepository } from '../infrastructure/admin-user.repository';
 import type { JwtService } from '../infrastructure/jwt.service';
 import type { NotificationService } from '@/lib/contexts/communications/application';
 
@@ -20,7 +20,7 @@ export class AuthService {
   constructor(
     private readonly sessionRepo: SessionRepository,
     private readonly magicLinkRepo: MagicLinkRepository,
-    private readonly adminUserRepo: AdminUserRepository,
+    private readonly userRepo: UserRepository,
     private readonly jwt: JwtService,
     private readonly notifications: NotificationService,
     private readonly verifyBaseUrl: string,
@@ -37,7 +37,7 @@ export class AuthService {
       redirectTo?: string | null;
     },
   ): Promise<void> {
-    const isAdmin = await this.adminUserRepo.exists(email);
+    const isAdmin = await this.userRepo.isAdmin(email);
     if (!isAdmin) return; // Silent — don't reveal who is/isn't an admin
 
     const { token, hash } = generateToken();
@@ -58,7 +58,6 @@ export class AuthService {
 
   /**
    * Verify a magic link token and create a session.
-   * Returns a JWT token string.
    */
   async verifyMagicLink(token: string): Promise<{ jwt: string; expiresAt: Date }> {
     const hash = hashToken(token);
@@ -68,29 +67,24 @@ export class AuthService {
     if (isMagicLinkUsed(magicLink)) throw new InvalidTokenError();
     if (isMagicLinkExpired(magicLink)) throw new InvalidTokenError();
 
-    // Mark token as used
     await this.magicLinkRepo.markUsed(magicLink.id);
 
-    // Create session
+    // Verify user exists and is admin
+    const user = await this.userRepo.findByEmail(magicLink.email);
+    if (!user || user.role !== 'admin') throw new NotAuthorizedError();
+
     const expiresAt = new Date(
       Date.now() + AUTH_CONSTANTS.SESSION_TTL_DAYS * 24 * 60 * 60 * 1000,
     );
 
-    // Evict oldest sessions if over limit
-    await this.sessionRepo.evictOldest(magicLink.email, AUTH_CONSTANTS.MAX_SESSIONS_PER_USER - 1);
+    await this.sessionRepo.evictOldest(user.id, AUTH_CONSTANTS.MAX_SESSIONS_PER_USER - 1);
+    const session = await this.sessionRepo.create(user.id, expiresAt);
 
-    // Verify admin status (defense in depth)
-    const adminUser = await this.adminUserRepo.findByEmail(magicLink.email);
-    if (!adminUser) throw new NotAuthorizedError();
-
-    const session = await this.sessionRepo.create(magicLink.email, expiresAt);
-
-    // Sign JWT
     const jwtToken = await this.jwt.sign({
-      sub: session.userId,
+      sub: user.id,
       sid: session.id,
-      email: session.email,
-      role: adminUser.role,
+      email: user.email,
+      role: user.role,
     });
 
     return { jwt: jwtToken, expiresAt };
@@ -98,7 +92,6 @@ export class AuthService {
 
   /**
    * Validate a JWT and return the authenticated user.
-   * Also refreshes the session's lastActiveAt.
    */
   async validateSession(jwtToken: string): Promise<AuthenticatedUser> {
     const payload = await this.jwt.verify(jwtToken);
@@ -108,24 +101,20 @@ export class AuthService {
     if (!session) throw new SessionExpiredError();
     if (!isSessionValid(session)) throw new SessionExpiredError();
 
-    // Update last active (fire-and-forget)
     this.sessionRepo.updateLastActive(session.id).catch(() => {});
 
-    // Re-verify admin status on each request (catches revoked access)
-    const adminUser = await this.adminUserRepo.findByEmail(session.email);
-    if (!adminUser) throw new NotAuthorizedError();
+    // Re-verify user status on each request (catches revoked access)
+    const user = await this.userRepo.findById(payload.sub);
+    if (!user || user.role !== 'admin') throw new NotAuthorizedError();
 
     return {
-      userId: session.userId,
+      userId: user.id,
       sessionId: session.id,
-      email: session.email,
-      role: adminUser.role,
+      email: user.email,
+      role: user.role,
     };
   }
 
-  /**
-   * Logout — destroy a single session.
-   */
   async logout(sessionId: string): Promise<void> {
     await this.sessionRepo.delete(sessionId);
   }

@@ -30,7 +30,8 @@ export function AdminSettings() {
   const load = useCallback(() => {
     setLoading(true);
     api.listAdmins()
-      .then(setAdmins)
+      .then((data) => setAdmins(data ?? []))
+      .catch(() => setAdmins([]))
       .finally(() => setLoading(false));
   }, []);
 
@@ -85,7 +86,7 @@ export function AdminSettings() {
             description="Add an admin to grant access to this dashboard."
           />
         ) : (
-          <DataTable columns={columnsWithActions} data={admins} loading={loading} />
+          <DataTable columns={columnsWithActions} rows={admins} loading={loading} />
         )}
       </div>
 
