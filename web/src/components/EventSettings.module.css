@@ -20,7 +20,7 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: var(--octa-space-1);
+  gap: var(--octa-space-3);
 }
 
 .previewImage {
