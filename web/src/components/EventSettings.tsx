@@ -568,11 +568,10 @@ function EventEditModal({
           )}
         </FormField>
 
-        <Card padding="md">
-          <FieldGroup
-            label="Claim courts"
-            description="Claimed courts are removed from member availability while this event is active."
-          >
+        <FieldGroup
+          label="Claim courts"
+          description="Claimed courts are removed from member availability while this event is active."
+        >
             {courts.length === 0 ? (
               <Text variant="caption" intent="muted">No courts configured yet.</Text>
             ) : (
@@ -590,8 +589,7 @@ function EventEditModal({
                 />
               ))
             )}
-          </FieldGroup>
-        </Card>
+        </FieldGroup>
 
         <Toggle checked={active} onValueChange={setActive} label="Active" />
 
