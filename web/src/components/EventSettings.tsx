@@ -484,6 +484,7 @@ function EventEditModal({
           </div>
         </Card>
 
+        <div className={styles.fieldCluster}>
         <FormField label="Title">
           {(id) => <Input id={id} fill value={title} onValueChange={setTitle} />}
         </FormField>
@@ -532,7 +533,9 @@ function EventEditModal({
             />
           )}
         </FormField>
+        </div>
 
+        <div className={styles.fieldCluster}>
         <FormField label="Starts at">
           {(id) => (
             <Input
@@ -567,9 +570,9 @@ function EventEditModal({
             />
           )}
         </FormField>
+        </div>
 
-        <hr style={{ border: 'none', borderTop: '1px solid var(--octa-border)', margin: 0 }} />
-
+        <div className={styles.fieldCluster}>
         <FieldGroup
           label="Claim courts"
           description="Claimed courts are removed from member availability while this event is active."
@@ -594,6 +597,7 @@ function EventEditModal({
         </FieldGroup>
 
         <Toggle checked={active} onValueChange={setActive} label="Active" />
+        </div>
 
         {inactiveSelectedCourts.length > 0 ? (
           <Callout intent="warning" title="Inactive courts selected">

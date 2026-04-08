@@ -12,9 +12,16 @@
 }
 
 .modalBody {
-  display: grid;
-  gap: var(--octa-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-5);
   padding: var(--octa-space-4);
+}
+
+.fieldCluster {
+  display: flex;
+  flex-direction: column;
+  gap: var(--octa-space-3);
 }
 
 
