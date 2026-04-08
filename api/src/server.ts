@@ -64,6 +64,8 @@ await app.register(bookingRoutes, { prefix: '/api' });
 await app.register(eventRoutes, { prefix: '/api/events' });
 await app.register(mediaRoutes, { prefix: '/api/media' });
 await app.register(meRoutes, { prefix: '/api/me' });
+import { adminRoutes } from './routes/admin';
+await app.register(adminRoutes, { prefix: '/api/admin' });
 
 // Plans
 import { planRepo } from '@/lib/container';

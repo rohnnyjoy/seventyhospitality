@@ -4,6 +4,7 @@ import { SignInPage } from './pages/SignInPage';
 import { BookingsPage } from './pages/BookingsPage';
 import { FacilitiesPage } from './pages/FacilitiesPage';
 import { EventsPage } from './pages/EventsPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { AuthGuard } from './components/AuthGuard';
 
 function Protected({ children }: { children: React.ReactNode }) {
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/bookings/:tab" element={<Protected><BookingsPage /></Protected>} />
         <Route path="/facilities" element={<Protected><FacilitiesPage /></Protected>} />
         <Route path="/events" element={<Protected><EventsPage /></Protected>} />
+        <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
       </Routes>
     </BrowserRouter>
   );

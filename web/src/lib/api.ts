@@ -181,4 +181,14 @@ export const api = {
       method: 'DELETE',
       body: JSON.stringify({ imageUrl }),
     }),
+
+  // Admin
+  listAdmins: () => request<{ id: string; email: string; name: string; role: string }[]>('/api/admin/users'),
+  createAdmin: (email: string, name: string) =>
+    request<{ id: string; email: string; name: string; role: string }>('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify({ email, name }),
+    }),
+  deleteAdmin: (id: string) =>
+    request<{ deleted: true }>(`/api/admin/users/${id}`, { method: 'DELETE' }),
 };

@@ -59,6 +59,12 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
         <div className={styles.nav}>
           <Button
+            ariaLabel="Settings"
+            icon={<AppIcon name="settings" />}
+            variant="ghost"
+            onClick={() => navigate('/settings')}
+          />
+          <Button
             ariaLabel={dark ? 'Switch to light mode' : 'Switch to dark mode'}
             icon={<AppIcon name={dark ? 'sun' : 'moon'} />}
             variant="ghost"

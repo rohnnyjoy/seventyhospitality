@@ -90,7 +90,7 @@ export const clubEventService = new ClubEventService(clubEventRepo, bookingRepo,
 
 const sessionRepo = new SessionRepository(db);
 const magicLinkRepo = new MagicLinkRepository(db);
-const adminUserRepo = new AdminUserRepository(db);
+export const adminUserRepo = new AdminUserRepository(db);
 const jwtService = new JwtService(process.env.JWT_SECRET ?? 'dev-fallback-secret-not-for-production');
 
 export const authService = new AuthService(
