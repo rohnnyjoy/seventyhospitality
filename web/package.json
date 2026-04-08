@@ -12,7 +12,7 @@
   "dependencies": {
     "@floating-ui/react": "^0.27.19",
     "@untitledui/icons": "^0.0.22",
-    "octahedron": "^0.4.2",
+    "octahedron": "^0.4.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.2"
