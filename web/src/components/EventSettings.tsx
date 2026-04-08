@@ -17,6 +17,7 @@ import {
   TextArea,
   Toggle,
   TimezoneSelect,
+  FieldGroup,
   pageStyles,
 } from 'octahedron';
 import { api, ApiError } from '../lib/api';
@@ -568,31 +569,28 @@ function EventEditModal({
         </FormField>
 
         <Card padding="md">
-          <div className={styles.stack}>
-            <Text variant="label" as="div">Claim courts</Text>
-            <Text variant="caption" intent="muted">
-              Claimed courts are removed from member availability while this event is active.
-            </Text>
+          <FieldGroup
+            label="Claim courts"
+            description="Claimed courts are removed from member availability while this event is active."
+          >
             {courts.length === 0 ? (
               <Text variant="caption" intent="muted">No courts configured yet.</Text>
             ) : (
-              <div className={styles.checkboxList}>
-                {courts.map((court) => (
-                  <Checkbox
-                    key={court.id}
-                    checked={selectedCourtIds.includes(court.id)}
-                    onValueChange={(checked) => toggleCourt(court.id, checked)}
-                    label={
-                      <span>
-                        {court.name}
-                        {!court.active ? ' (inactive)' : ''}
-                      </span>
-                    }
-                  />
-                ))}
-              </div>
+              courts.map((court) => (
+                <Checkbox
+                  key={court.id}
+                  checked={selectedCourtIds.includes(court.id)}
+                  onValueChange={(checked) => toggleCourt(court.id, checked)}
+                  label={
+                    <span>
+                      {court.name}
+                      {!court.active ? ' (inactive)' : ''}
+                    </span>
+                  }
+                />
+              ))
             )}
-          </div>
+          </FieldGroup>
         </Card>
 
         <Toggle checked={active} onValueChange={setActive} label="Active" />
