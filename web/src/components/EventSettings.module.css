@@ -14,7 +14,7 @@
 .modalBody {
   display: flex;
   flex-direction: column;
-  gap: var(--octa-space-4);
+  gap: var(--octa-space-3);
   padding: var(--octa-space-4);
 }
 
