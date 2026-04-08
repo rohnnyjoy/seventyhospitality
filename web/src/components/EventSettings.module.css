@@ -20,7 +20,7 @@
 .stack {
   display: flex;
   flex-direction: column;
-  gap: var(--octa-space-3);
+  gap: var(--octa-space-1);
 }
 
 .previewImage {
@@ -43,6 +43,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--octa-space-2);
+  margin-top: var(--octa-space-2);
 }
 
 .imageField {
