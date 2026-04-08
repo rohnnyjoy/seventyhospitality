@@ -568,6 +568,8 @@ function EventEditModal({
           )}
         </FormField>
 
+        <hr style={{ border: 'none', borderTop: '1px solid var(--octa-border)', margin: 0 }} />
+
         <FieldGroup
           label="Claim courts"
           description="Claimed courts are removed from member availability while this event is active."

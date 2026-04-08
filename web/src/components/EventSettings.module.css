@@ -13,7 +13,7 @@
 
 .modalBody {
   display: grid;
-  gap: var(--octa-space-3);
+  gap: var(--octa-space-4);
   padding: var(--octa-space-4);
 }
 
